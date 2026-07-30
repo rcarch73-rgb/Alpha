@@ -16,16 +16,28 @@ function legacyPlan(p, monthlySpend){
   add('Non-registered savings','Non-registered',p.nonreg,primary,0);
   const incomeSources=[];
   const addIncome=(name,type,owner,amount,startAge,endAge,indexed=true,taxable=true)=>{if(n(amount)>0)incomeSources.push({id:id('i',incomeSources.length+1),name,type,owner,annualAmount:n(amount),startAge:n(startAge),endAge:n(endAge),indexed,taxable});};
-  const primaryRet=n(p.retire1)||65;
-  addIncome('Current household employment income','Employment',primary,p.currentIncome,0,primaryRet,true,true);
-  if(n(p.incomeBridge)>0&&n(p.bridgeYears)>0){
-    const bridgeOwner=couple?partner:primary;
-    const bridgeStart=couple?Math.max(0,n(p.age2)+(primaryRet-n(p.age1))):primaryRet;
-    addIncome('Continuing employment income','Employment',bridgeOwner,p.incomeBridge,bridgeStart,bridgeStart+n(p.bridgeYears),true,true);
+  const detailed=Object.prototype.hasOwnProperty.call(p,'employment1');
+  if(detailed){
+    addIncome(`${primary} employment income`,'Employment',primary,p.employment1,n(p.age1),n(p.retire1),true,true);
+    addIncome(`${primary} pension`,'Pension',primary,p.pension1,p.pensionStart1,110,true,true);
+    addIncome(`${primary} CPP`,'CPP',primary,p.cpp1,p.cppStart1,110,true,true);
+    addIncome(`${primary} OAS`,'OAS',primary,p.oas1,p.oasStart1,110,true,true);
+    addIncome(p.otherLabel1||`${primary} other income`,'Other income',primary,p.otherAmount1,p.otherStart1,p.otherEnd1,true,true);
+    if(couple){
+      addIncome(`${partner} employment income`,'Employment',partner,p.employment2,n(p.age2),n(p.retire2),true,true);
+      addIncome(`${partner} pension`,'Pension',partner,p.pension2,p.pensionStart2,110,true,true);
+      addIncome(`${partner} CPP`,'CPP',partner,p.cpp2,p.cppStart2,110,true,true);
+      addIncome(`${partner} OAS`,'OAS',partner,p.oas2,p.oasStart2,110,true,true);
+      addIncome(p.otherLabel2||`${partner} other income`,'Other income',partner,p.otherAmount2,p.otherStart2,p.otherEnd2,true,true);
+    }
+  }else{
+    const primaryRet=n(p.retire1)||65;
+    addIncome('Current household employment income','Employment',primary,p.currentIncome,0,primaryRet,true,true);
+    if(n(p.incomeBridge)>0&&n(p.bridgeYears)>0){const bridgeOwner=couple?partner:primary;const bridgeStart=couple?Math.max(0,n(p.age2)+(primaryRet-n(p.age1))):primaryRet;addIncome('Continuing employment income','Employment',bridgeOwner,p.incomeBridge,bridgeStart,bridgeStart+n(p.bridgeYears),true,true);}
+    addIncome('Pension income','Pension',couple?partner:primary,p.pension,couple?n(p.retire2):primaryRet,110,true,true);
+    addIncome('CPP, OAS and other stable income','Government benefits',primary,p.benefits,65,110,true,true);
   }
-  addIncome('Pension income','Pension',couple?partner:primary,p.pension,couple?n(p.retire2):primaryRet,110,true,true);
-  addIncome('CPP, OAS and other stable income','Government benefits',primary,p.benefits,65,110,true,true);
-  return {hasPartner:couple,people,household:{province:p.province||'British Columbia',planningAge:n(p.horizon)||95,inflationRate:n(p.inflationRate)||2,incomeIndexRate:n(p.inflationRate)||2,returnRate:n(p.returnRate)||5,emergencyFundAmount:0},accounts,incomeSources,debts:[],expenses:[{id:'e1',name:'Retirement lifestyle',category:'Lifestyle',amount:n(monthlySpend),frequency:'Monthly',startAge:primaryRet,endAge:n(p.horizon)||95}],events:[],planningModel:{withdrawalStrategy:{mode:'balanced'}}};
+  return {hasPartner:couple,people,household:{province:p.province||'British Columbia',planningAge:n(p.horizon)||95,inflationRate:n(p.inflationRate)||2,incomeIndexRate:n(p.inflationRate)||2,returnRate:n(p.returnRate)||5,emergencyFundAmount:0},accounts,incomeSources,debts:[],expenses:[{id:'e1',name:'Retirement lifestyle',category:'Lifestyle',amount:n(monthlySpend),frequency:'Monthly',startAge:n(p.retire1)||65,endAge:n(p.horizon)||95}],events:[],planningModel:{withdrawalStrategy:{mode:'balanced'}}};
 }
 function runLegacy(p, monthlySpend){
   const plan=legacyPlan(p,monthlySpend), startYear=currentYear(), planningAge=n(p.horizon)||95;

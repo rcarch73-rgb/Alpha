@@ -1,4 +1,4 @@
-# Harbour North Foundation Alpha v0.3.1
+# Harbour North Foundation Alpha v0.3.2
 
 Harbour North is a calm, question-led Canadian retirement decision platform. This alpha validates the approved first-use flow, Retirement Brief, recommendations, evidence, and one-change-at-a-time scenario comparison.
 
@@ -39,3 +39,7 @@ node scripts/validate.mjs
 ```
 
 The included GitHub Actions workflow runs the same check on pushes and pull requests.
+
+
+## v0.3.2 income model
+Step 3 now records employment, pension, CPP, OAS, and time-limited other income separately for each household member. The engine adapter assigns every source to its owner and applies its own start and end age.
