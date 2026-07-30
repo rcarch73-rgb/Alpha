@@ -10,7 +10,7 @@ function legacyPlan(p, monthlySpend){
   const people=[{id:'p1',role:'primary',name:primary,birthDate:birthDateFromAge(p.age1),retirementAge:n(p.retire1)||65,employmentStatus:'Employed'}];
   if(couple)people.push({id:'p2',role:'partner',name:partner,birthDate:birthDateFromAge(p.age2),retirementAge:n(p.retire2)||65,employmentStatus:'Employed'});
   const accounts=[];
-  const add=(name,type,balance,owner=primary,contribution=0)=>{if(n(balance)>0||n(contribution)>0)accounts.push({id:id('a',accounts.length+1),name,type,owner,balance:n(balance),returnRate:n(p.returnRate)||5,annualContribution:n(contribution)});};
+  const add=(name,type,balance,owner=primary,contribution=0)=>{if(n(balance)>0||n(contribution)>0)accounts.push({id:id('a',accounts.length+1),name,type,owner,balance:n(balance),returnRate:n(p.returnRate)||5,annualContribution:n(contribution),contributionEndAge:n(p.contribEndAge)||n(p.retire1)});};
   add('Registered savings','RRSP/RRIF',p.rrsp,primary,n(p.contrib)*12);
   add('Tax-free savings','TFSA',p.tfsa,primary,0);
   add('Non-registered savings','Non-registered',p.nonreg,primary,0);
