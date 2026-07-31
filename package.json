@@ -1,6 +1,6 @@
 {
   "name": "harbour-north-foundation-alpha",
-  "version": "0.3.1",
+  "version": "0.3.9",
   "private": true,
   "scripts": {
     "serve": "python3 -m http.server 8000",
