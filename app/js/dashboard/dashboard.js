@@ -5,6 +5,7 @@
   const escape=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const el=id=>document.getElementById(id);
   let currentRecommendations=[];
+  let activeScenario=null;
 
   function greeting(name){
     const hour=new Date().getHours();
@@ -51,6 +52,7 @@
 
     const reviewDate=el('dashboardReviewDate');
     if(reviewDate){const d=new Date();d.setFullYear(d.getFullYear()+1);reviewDate.textContent=d.toLocaleDateString('en-CA',{month:'long',year:'numeric'});}
+    renderSavedScenarios(plan);
   }
 
   function rankExplanation(item,index){
@@ -82,6 +84,102 @@
     return map[item.id]||{screen:'picture',label:'Review this in my plan'};
   }
 
+
+  const scenarioLabels={retire1:'Retirement age',retire2:'Partner retirement age',spend:'Monthly spending',returnRate:'Investment return',inflationRate:'Inflation',province:'Province',horizon:'Planning horizon'};
+  function currentPlan(){return window.HNCloudBridge?.getPlan?.()||null}
+  function calculatePlan(plan){
+    try{return window.HNVerifiedEngine?.calculate?.(plan)||null}catch(error){console.warn('Scenario Coach calculation failed.',error);return null}
+  }
+  function scenarioFor(item){
+    const plan=currentPlan();
+    if(!plan)return null;
+    if(item?.comparison?.patch){
+      const patch=structuredClone(item.comparison.patch);
+      return {name:item.comparison.label||item.title,patch};
+    }
+    if(item?.id==='assumption-review'){
+      return {name:'More conservative assumptions',patch:{returnRate:Math.max(0,num(plan.returnRate||5)-1),inflationRate:Math.min(8,num(plan.inflationRate||2)+.5)}};
+    }
+    return null;
+  }
+  function changedRows(plan,patch){
+    return Object.entries(patch||{}).filter(([key,value])=>String(plan?.[key]??'')!==String(value??'')).map(([key,value])=>{
+      const before=plan?.[key];
+      const format=v=>key==='spend'?`${money(v)}/month`:key==='returnRate'||key==='inflationRate'?`${num(v)}%`:String(v??'—');
+      return `<div class="scenario-change-row"><span>${escape(scenarioLabels[key]||key)}</span><strong>${escape(format(before))}</strong><b>→</b><strong>${escape(format(value))}</strong></div>`;
+    }).join('');
+  }
+  function ensureScenarioCoach(){
+    let panel=el('scenarioCoachPanel');
+    if(panel)return panel;
+    panel=document.createElement('div');
+    panel.id='scenarioCoachPanel';
+    panel.className='scenario-coach hidden';
+    panel.setAttribute('role','dialog');
+    panel.setAttribute('aria-modal','true');
+    panel.innerHTML='<div class="scenario-coach-backdrop" data-close-scenario-coach></div><section class="scenario-coach-card" aria-labelledby="scenarioCoachTitle"><button class="scenario-coach-close" type="button" data-close-scenario-coach aria-label="Close">×</button><div id="scenarioCoachContent"></div></section>';
+    document.body.appendChild(panel);
+    return panel;
+  }
+  function openScenarioCoach(item){
+    const definition=scenarioFor(item),plan=currentPlan();
+    if(!definition||!plan)return;
+    const base=calculatePlan(plan),alternativePlan={...structuredClone(plan),...definition.patch},alternative=calculatePlan(alternativePlan);
+    if(!base||!alternative){window.toast?.('This comparison could not be calculated.');return}
+    activeScenario={id:`scenario-${Date.now()}`,name:definition.name,sourceOpportunityId:item.id,sourceOpportunityTitle:item.title,patch:definition.patch,createdAt:new Date().toISOString(),current:{sustainable:num(base.sustainable),ending:num(base.ending),ratio:num(base.ratio)},alternative:{sustainable:num(alternative.sustainable),ending:num(alternative.ending),ratio:num(alternative.ratio)}};
+    const sustainableDelta=activeScenario.alternative.sustainable-activeScenario.current.sustainable;
+    const endingDelta=activeScenario.alternative.ending-activeScenario.current.ending;
+    const panel=ensureScenarioCoach(),content=el('scenarioCoachContent');
+    content.innerHTML=`
+      <div class="eyebrow">Scenario Coach</div>
+      <h2 id="scenarioCoachTitle">See the difference</h2>
+      <p class="scenario-coach-lead">This temporary comparison changes only the inputs listed below. Your saved plan remains untouched.</p>
+      <section class="scenario-change-list"><h3>What changes</h3>${changedRows(plan,definition.patch)||'<p class="quiet">No input changes were found.</p>'}</section>
+      <div class="scenario-coach-compare">
+        <section><span>Current plan</span><strong>${money(activeScenario.current.sustainable)}/mo</strong><small>Sustainable spending</small><strong>${money(activeScenario.current.ending)}</strong><small>Ending assets</small></section>
+        <section class="suggested"><span>Suggested scenario</span><strong>${money(activeScenario.alternative.sustainable)}/mo</strong><small>Sustainable spending</small><strong>${money(activeScenario.alternative.ending)}</strong><small>Ending assets</small></section>
+      </div>
+      <div class="scenario-coach-delta"><strong>Modelled difference</strong><span>${sustainableDelta>=0?'+':''}${money(sustainableDelta)}/month sustainable spending · ${endingDelta>=0?'+':''}${money(endingDelta)} ending assets</span></div>
+      <p class="scenario-coach-note">This is a planning comparison based on the same verified engine and assumptions as your primary plan. It is not a prediction or personal financial advice.</p>
+      <div class="scenario-coach-actions"><button class="btn secondary" type="button" data-close-scenario-coach>Keep current plan</button><button class="btn secondary" type="button" data-open-scenario-controls>Adjust comparison</button><button class="btn primary" type="button" data-save-coached-scenario>Save as scenario</button></div>`;
+    panel.classList.remove('hidden');document.body.classList.add('scenario-coach-open');panel.querySelector('.scenario-coach-close')?.focus();
+  }
+  function closeScenarioCoach(){el('scenarioCoachPanel')?.classList.add('hidden');document.body.classList.remove('scenario-coach-open')}
+  function applyPatchToScenarioControls(patch){
+    const mapping={retire1:'scenarioAge',spend:'scenarioSpend',returnRate:'scenarioReturn',inflationRate:'scenarioInflation',province:'scenarioProvince',horizon:'scenarioHorizon'};
+    Object.entries(mapping).forEach(([key,id])=>{if(Object.prototype.hasOwnProperty.call(patch,key)&&el(id)){el(id).value=patch[key];el(id).dispatchEvent(new Event(id==='scenarioProvince'?'change':'input',{bubbles:true}))}});
+  }
+  function openScenarioControls(){
+    if(!activeScenario)return;
+    closeScenarioCoach();closeDecision();
+    window.go?.('explore');setTimeout(()=>{window.showExploreView?.('scenarios');applyPatchToScenarioControls(activeScenario.patch)},60);
+  }
+  function saveScenario(){
+    if(!activeScenario)return;
+    const plan=currentPlan();if(!plan)return;
+    const proposed=(prompt('Name this scenario',activeScenario.name)||'').trim();if(!proposed)return;
+    const saved=Array.isArray(plan.savedScenarios)?structuredClone(plan.savedScenarios):[];
+    const scenario={...structuredClone(activeScenario),name:proposed};
+    saved.unshift(scenario);
+    const updated={...structuredClone(plan),savedScenarios:saved.slice(0,20),updatedAt:new Date().toISOString()};
+    window.HNCloudBridge?.applyPlan?.(updated);
+    activeScenario=scenario;renderSavedScenarios(updated);closeScenarioCoach();window.toast?.('Scenario saved');
+  }
+  function ensureSavedScenarioShelf(){
+    const view=el('scenariosView');if(!view)return null;
+    let shelf=el('savedScenarioShelf');
+    if(!shelf){shelf=document.createElement('section');shelf.id='savedScenarioShelf';shelf.className='card saved-scenario-shelf';const layout=view.querySelector('.scenario-layout');layout?.insertAdjacentElement('afterend',shelf)}
+    return shelf;
+  }
+  function renderSavedScenarios(plan=currentPlan()){
+    const shelf=ensureSavedScenarioShelf();if(!shelf)return;
+    const scenarios=Array.isArray(plan?.savedScenarios)?plan.savedScenarios:[];
+    shelf.innerHTML=`<div class="overview-card-head"><div><div class="eyebrow">Saved comparisons</div><h3>Scenario Coach</h3></div><span class="quiet">${scenarios.length} saved</span></div>${scenarios.length?`<div class="saved-scenario-list">${scenarios.map(s=>`<article data-saved-scenario="${escape(s.id)}"><div><strong>${escape(s.name)}</strong><small>${escape(s.sourceOpportunityTitle||'Planning comparison')} · ${new Date(s.createdAt).toLocaleDateString('en-CA')}</small></div><div><button class="btn secondary small-btn" type="button" data-load-saved-scenario>Open</button><button class="btn text danger" type="button" data-delete-saved-scenario>Delete</button></div></article>`).join('')}</div>`:'<p class="quiet">Comparisons saved from an opportunity will appear here. They do not alter the primary plan.</p>'}`;
+  }
+  function scenarioById(id){return (currentPlan()?.savedScenarios||[]).find(s=>s.id===id)}
+  function loadSavedScenario(id){const scenario=scenarioById(id);if(!scenario)return;activeScenario=structuredClone(scenario);window.go?.('explore');setTimeout(()=>{window.showExploreView?.('scenarios');applyPatchToScenarioControls(scenario.patch);el('scenariosView')?.scrollIntoView({behavior:'smooth',block:'start'})},60)}
+  function deleteSavedScenario(id){const plan=currentPlan();if(!plan)return;const scenario=scenarioById(id);if(!scenario||!confirm(`Delete “${scenario.name}”?`))return;const updated={...structuredClone(plan),savedScenarios:(plan.savedScenarios||[]).filter(s=>s.id!==id),updatedAt:new Date().toISOString()};window.HNCloudBridge?.applyPlan?.(updated);renderSavedScenarios(updated);window.toast?.('Scenario deleted')}
+
   function ensureDecisionPanel(){
     let panel=el('overviewOpportunityPanel');
     if(panel)return panel;
@@ -111,7 +209,7 @@
         <section class="wide"><h3>Why this may improve your plan</h3><p>${escape(item.why||'')}</p></section>
         <section class="wide"><h3>What Harbour North evaluated</h3><div class="overview-decision-evidence">${evidence||'<span>Current plan inputs</span>'}</div></section>
         <section class="wide"><h3>What to consider before changing it</h3><p>${escape(tradeoff)}</p></section>
-        <section class="wide overview-decision-action"><h3>How to make the change</h3><p>${escape(item.how||'Open the relevant plan inputs, review the suggested change, and rebuild the plan before deciding whether to keep it.')}</p><button class="btn primary" type="button" data-opportunity-action data-screen="${escape(action.screen)}" data-view="${escape(action.view||'')}" data-field="${escape(action.field||'')}">${escape(action.label)} →</button></section>
+        <section class="wide overview-decision-action"><h3>How to make the change</h3><p>${escape(item.how||'Open the relevant plan inputs, review the suggested change, and rebuild the plan before deciding whether to keep it.')}</p><div class="overview-decision-buttons">${scenarioFor(item)?`<button class="btn primary" type="button" data-create-opportunity-scenario="${escape(item.id)}">Create comparison →</button>`:''}<button class="btn secondary" type="button" data-opportunity-action data-screen="${escape(action.screen)}" data-view="${escape(action.view||'')}" data-field="${escape(action.field||'')}">${escape(action.label)} →</button></div>${scenarioFor(item)?'':`<p class="quiet overview-comparison-unavailable">A trustworthy comparison needs additional inputs or controls before Harbour North can model this opportunity.</p>`}</section>
       </div>`;
     panel.classList.remove('hidden');
     document.body.classList.add('opportunity-panel-open');
@@ -132,6 +230,13 @@
       return;
     }
     if(event.target.closest('[data-close-opportunity]')){closeDecision();return;}
+    if(event.target.closest('[data-close-scenario-coach]')){closeScenarioCoach();return;}
+    const createScenarioButton=event.target.closest('[data-create-opportunity-scenario]');
+    if(createScenarioButton){const item=currentRecommendations.find(x=>x.id===createScenarioButton.dataset.createOpportunityScenario);if(item)openScenarioCoach(item);return;}
+    if(event.target.closest('[data-open-scenario-controls]')){openScenarioControls();return;}
+    if(event.target.closest('[data-save-coached-scenario]')){saveScenario();return;}
+    const loadButton=event.target.closest('[data-load-saved-scenario]');if(loadButton){loadSavedScenario(loadButton.closest('[data-saved-scenario]')?.dataset.savedScenario);return;}
+    const deleteButton=event.target.closest('[data-delete-saved-scenario]');if(deleteButton){deleteSavedScenario(deleteButton.closest('[data-saved-scenario]')?.dataset.savedScenario);return;}
     const actionButton=event.target.closest('[data-opportunity-action]');
     if(actionButton){
       const {screen,view,field}=actionButton.dataset;
@@ -141,6 +246,6 @@
       if(field)setTimeout(()=>{const target=el(field);target?.scrollIntoView({behavior:'smooth',block:'center'});target?.focus?.();target?.classList.add('opportunity-input-highlight');setTimeout(()=>target?.classList.remove('opportunity-input-highlight'),2600)},180);
     }
   });
-  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDecision()});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeScenarioCoach();closeDecision()}});
   window.HNDashboard={render};
 })();
