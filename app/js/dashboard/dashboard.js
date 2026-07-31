@@ -4,6 +4,7 @@
   const money=v=>new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:0}).format(num(v));
   const escape=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const el=id=>document.getElementById(id);
+  let currentRecommendations=[];
 
   function greeting(name){
     const hour=new Date().getHours();
@@ -34,10 +35,10 @@
     ].join('');
 
     let recommendations=[];
-    try{recommendations=window.HNRecommendationEngine?.rank(plan,result,3)||[]}catch(error){console.warn('Dashboard opportunities unavailable.',error)}
+    try{recommendations=window.HNRecommendationEngine?.rank(plan,result,3)||[];currentRecommendations=recommendations}catch(error){console.warn('Dashboard opportunities unavailable.',error)}
     const opp=el('dashboardOpportunities');
     if(opp){
-      opp.innerHTML=recommendations.length?recommendations.map((item,index)=>`<div class="overview-opportunity"><span class="overview-opportunity-number">${index+1}</span><div><strong>${escape(item.title)}</strong><small>${escape(item.summary||item.impactText||item.timing)}</small></div><button type="button" data-dashboard-opportunity="${escape(item.id)}">Explain →</button></div>`).join(''):'<p class="quiet">No significant changes are recommended right now. Review the plan annually or after a meaningful life change.</p>';
+      opp.innerHTML=recommendations.length?recommendations.map((item,index)=>`<div class="overview-opportunity"><span class="overview-opportunity-number">${index+1}</span><div><strong>${escape(item.title)}</strong><small>${escape(item.summary||item.impactText||item.timing)}</small></div><button type="button" data-dashboard-opportunity="${escape(item.id)}">Explain this →</button></div>`).join(''):'<p class="quiet">No significant changes are recommended right now. Review the plan annually or after a meaningful life change.</p>';
     }
 
     const updated=plan.updatedAt?new Date(plan.updatedAt):null;
@@ -52,13 +53,94 @@
     if(reviewDate){const d=new Date();d.setFullYear(d.getFullYear()+1);reviewDate.textContent=d.toLocaleDateString('en-CA',{month:'long',year:'numeric'});}
   }
 
+  function rankExplanation(item,index){
+    const others=currentRecommendations.filter((_,i)=>i!==index);
+    const lead=index===0
+      ? 'This opportunity ranked first because it is expected to have the greatest effect on the current plan.'
+      : `This opportunity ranked ${index===1?'second':'third'} because the items above it address a more immediate or larger planning priority.`;
+    const comparison=others.length
+      ? `It was weighed against ${others.map(x=>x.title.toLowerCase()).join(' and ')}.`
+      : '';
+    return `${lead} ${comparison}`.trim();
+  }
+
+  function actionFor(item){
+    const map={
+      'cpp-timing':{screen:'picture',field:'cppStart1',label:'Review CPP timing in my plan'},
+      'oas-timing':{screen:'picture',field:'oasStart1',label:'Review OAS timing in my plan'},
+      'rrsp-drawdown':{screen:'picture',field:'rrsp1',label:'Review RRSP details in my plan'},
+      'tfsa-flexibility':{screen:'picture',field:'tfsa1',label:'Review TFSA details in my plan'},
+      'income-bridge':{screen:'picture',field:'otherIncomeList1',label:'Review income sources in my plan'},
+      'benefit-estimates':{screen:'picture',field:'cpp1',label:'Update CPP and OAS estimates'},
+      'account-refresh':{screen:'picture',field:'rrsp1',label:'Update account balances'},
+      'spending-flexibility':{screen:'goal',field:'spend',label:'Review my spending target'},
+      'plan-gap':{screen:'goal',field:'spend',label:'Adjust my goal'},
+      'retirement-age':{screen:'goal',field:'retire1',label:'Review retirement timing'},
+      'assumption-review':{screen:'explore',view:'scenarios',field:'scenarioReturn',label:'Review planning assumptions'},
+      'annual-review':{screen:'explore',view:'review',label:'Open my Plan Review'}
+    };
+    return map[item.id]||{screen:'picture',label:'Review this in my plan'};
+  }
+
+  function ensureDecisionPanel(){
+    let panel=el('overviewOpportunityPanel');
+    if(panel)return panel;
+    panel=document.createElement('div');
+    panel.id='overviewOpportunityPanel';
+    panel.className='overview-opportunity-panel hidden';
+    panel.setAttribute('role','dialog');
+    panel.setAttribute('aria-modal','true');
+    panel.innerHTML='<div class="overview-opportunity-panel-backdrop" data-close-opportunity></div><section class="overview-opportunity-panel-card" aria-labelledby="overviewOpportunityTitle"><button class="overview-opportunity-close" type="button" data-close-opportunity aria-label="Close">×</button><div id="overviewOpportunityContent"></div></section>';
+    document.body.appendChild(panel);
+    return panel;
+  }
+
+  function openDecision(item,index){
+    const panel=ensureDecisionPanel();
+    const content=el('overviewOpportunityContent');
+    const action=actionFor(item);
+    const evidence=(item.evidence||[]).map(x=>`<span>✓ ${escape(x)}</span>`).join('');
+    const tradeoff=item.comparison?.summary||item.comparisonNote||'This opportunity should be reviewed alongside your full retirement plan before making a change.';
+    content.innerHTML=`
+      <div class="eyebrow">Opportunity ${index+1} of ${currentRecommendations.length}</div>
+      <h2 id="overviewOpportunityTitle">${escape(item.title)}</h2>
+      <p class="overview-opportunity-lead">${escape(item.summary||'')}</p>
+      <div class="overview-decision-grid">
+        <section><h3>Why this ranked here</h3><p>${escape(rankExplanation(item,index))}</p></section>
+        <section><h3>Expected impact</h3><p><strong>${escape(item.impactText||item.impact||'Planning opportunity')}</strong></p></section>
+        <section class="wide"><h3>Why this may improve your plan</h3><p>${escape(item.why||'')}</p></section>
+        <section class="wide"><h3>What Harbour North evaluated</h3><div class="overview-decision-evidence">${evidence||'<span>Current plan inputs</span>'}</div></section>
+        <section class="wide"><h3>What to consider before changing it</h3><p>${escape(tradeoff)}</p></section>
+        <section class="wide overview-decision-action"><h3>How to make the change</h3><p>${escape(item.how||'Open the relevant plan inputs, review the suggested change, and rebuild the plan before deciding whether to keep it.')}</p><button class="btn primary" type="button" data-opportunity-action data-screen="${escape(action.screen)}" data-view="${escape(action.view||'')}" data-field="${escape(action.field||'')}">${escape(action.label)} →</button></section>
+      </div>`;
+    panel.classList.remove('hidden');
+    document.body.classList.add('opportunity-panel-open');
+    panel.querySelector('.overview-opportunity-close')?.focus();
+  }
+
+  function closeDecision(){
+    el('overviewOpportunityPanel')?.classList.add('hidden');
+    document.body.classList.remove('opportunity-panel-open');
+  }
+
   document.addEventListener('click',event=>{
-    const button=event.target.closest('[data-dashboard-opportunity]');
-    if(!button)return;
-    const opportunityId=button.dataset.dashboardOpportunity;
-    try{sessionStorage.setItem('hn.focusOpportunity',opportunityId)}catch(_){}
-    location.hash='#explore/recommendations';
-    setTimeout(()=>window.HNRecommendations?.openOpportunity?.(opportunityId),60);
+    const opportunity=event.target.closest('[data-dashboard-opportunity]');
+    if(opportunity){
+      const id=opportunity.dataset.dashboardOpportunity;
+      const index=currentRecommendations.findIndex(item=>item.id===id);
+      if(index>=0)openDecision(currentRecommendations[index],index);
+      return;
+    }
+    if(event.target.closest('[data-close-opportunity]')){closeDecision();return;}
+    const actionButton=event.target.closest('[data-opportunity-action]');
+    if(actionButton){
+      const {screen,view,field}=actionButton.dataset;
+      closeDecision();
+      if(typeof window.go==='function')window.go(screen||'picture');
+      if(view)setTimeout(()=>window.showExploreView?.(view),0);
+      if(field)setTimeout(()=>{const target=el(field);target?.scrollIntoView({behavior:'smooth',block:'center'});target?.focus?.();target?.classList.add('opportunity-input-highlight');setTimeout(()=>target?.classList.remove('opportunity-input-highlight'),2600)},180);
+    }
   });
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDecision()});
   window.HNDashboard={render};
 })();
