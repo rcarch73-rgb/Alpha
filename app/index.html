@@ -47,8 +47,10 @@
 <script src="js/engine-adapter.js"></script>
 <script>
 const KEY='harbourNorth.foundation.v0.1';
+const VALID_SCREENS=new Set(['welcome','household','goal','picture','brief','explore']);
+let currentExploreView='evidence';
 const $=id=>document.getElementById(id); const n=v=>Number.isFinite(Number(v))?Number(v):0; const money=n=>new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:0}).format(Number(n)||0);
-const defaults={schemaVersion:'foundation-0.3.5',household:'couple',name1:'Ryan',age1:52,name2:'Liz',age2:46,spend:6000,retire1:55,retire2:55,horizon:95,rrsp1:496000,tfsa1:48000,nonreg1:0,rrspContrib1:2300,rrspContribEnd1:55,tfsaContrib1:0,tfsaContribEnd1:55,nonregContrib1:0,nonregContribEnd1:55,rrsp2:0,tfsa2:0,nonreg2:0,rrspContrib2:0,rrspContribEnd2:55,tfsaContrib2:0,tfsaContribEnd2:55,nonregContrib2:0,nonregContribEnd2:55,employment1:92000,pension1:0,pensionStart1:55,cpp1:15700,cppStart1:65,oas1:8600,oasStart1:65,otherIncome1:[{type:'WCB / settlement',name:'WCB benefit',amount:16200,startAge:52,endAge:65,taxable:false}],employment2:110000,pension2:38400,pensionStart2:55,cpp2:16400,cppStart2:65,oas2:8600,oasStart2:65,otherIncome2:[],updatedAt:null};
+const defaults={schemaVersion:'foundation-0.3.6',household:'couple',name1:'Ryan',age1:52,name2:'Liz',age2:46,spend:6000,retire1:55,retire2:55,horizon:95,rrsp1:496000,tfsa1:48000,nonreg1:0,rrspContrib1:2300,rrspContribEnd1:55,tfsaContrib1:0,tfsaContribEnd1:55,nonregContrib1:0,nonregContribEnd1:55,rrsp2:0,tfsa2:0,nonreg2:0,rrspContrib2:0,rrspContribEnd2:55,tfsaContrib2:0,tfsaContribEnd2:55,nonregContrib2:0,nonregContribEnd2:55,employment1:92000,pension1:0,pensionStart1:55,cpp1:15700,cppStart1:65,oas1:8600,oasStart1:65,otherIncome1:[{type:'WCB / settlement',name:'WCB benefit',amount:16200,startAge:52,endAge:65,taxable:false}],employment2:110000,pension2:38400,pensionStart2:55,cpp2:16400,cppStart2:65,oas2:8600,oasStart2:65,otherIncome2:[],updatedAt:null};
 const freshDefaults={...defaults,household:'couple',name1:'',age1:50,name2:'',age2:50,spend:5000,retire1:65,retire2:65,horizon:95,rrsp1:0,tfsa1:0,nonreg1:0,rrspContrib1:0,rrspContribEnd1:65,tfsaContrib1:0,tfsaContribEnd1:65,nonregContrib1:0,nonregContribEnd1:65,rrsp2:0,tfsa2:0,nonreg2:0,rrspContrib2:0,rrspContribEnd2:65,tfsaContrib2:0,tfsaContribEnd2:65,nonregContrib2:0,nonregContribEnd2:65,employment1:0,pension1:0,pensionStart1:65,cpp1:0,cppStart1:65,oas1:0,oasStart1:65,otherIncome1:[],employment2:0,pension2:0,pensionStart2:65,cpp2:0,cppStart2:65,oas2:0,oasStart2:65,otherIncome2:[],updatedAt:null};
 function createFreshPlan(){return structuredClone(freshDefaults)}
 function migrate(p){const x={...defaults,...p};if(p.rrsp!==undefined&&!p.rrsp1)x.rrsp1=p.rrsp;if(p.tfsa!==undefined&&!p.tfsa1)x.tfsa1=p.tfsa;if(p.nonreg!==undefined&&!p.nonreg1)x.nonreg1=p.nonreg;if(p.contrib!==undefined&&!p.rrspContrib1)x.rrspContrib1=p.contrib;if(p.contribEndAge!==undefined&&!p.rrspContribEnd1)x.rrspContribEnd1=p.contribEndAge;if(!Array.isArray(p.otherIncome1)){x.otherIncome1=n(p.otherAmount1)>0?[{type:'Other',name:p.otherLabel1||'Other income',amount:n(p.otherAmount1),startAge:n(p.otherStart1),endAge:n(p.otherEnd1),taxable:true}]:defaults.otherIncome1}if(!Array.isArray(p.otherIncome2)){x.otherIncome2=n(p.otherAmount2)>0?[{type:'Other',name:p.otherLabel2||'Other income',amount:n(p.otherAmount2),startAge:n(p.otherStart2),endAge:n(p.otherEnd2),taxable:true}]:[]}return x}
@@ -57,10 +59,36 @@ function incomeRow(item,i,owner){const types=['WCB / settlement','Rental income'
 function renderOtherIncome(){[1,2].forEach(owner=>{const list=$(`otherIncomeList${owner}`);if(list)list.innerHTML=(plan[`otherIncome${owner}`]||[]).map((x,i)=>incomeRow(x,i,owner)).join('')||'<p class="quiet">No additional income sources added.</p>'})}
 function collectOtherIncome(){document.querySelectorAll('.income-source-row').forEach(row=>{const owner=row.dataset.incomeOwner,i=Number(row.dataset.incomeIndex),item=plan[`otherIncome${owner}`][i];row.querySelectorAll('[data-income-field]').forEach(el=>item[el.dataset.incomeField]=el.type==='number'?Number(el.value):el.value);item.taxable=item.type!=='WCB / settlement'})}
 function collect(){const fields=['name1','age1','name2','age2','spend','retire1','retire2','horizon','rrsp1','tfsa1','nonreg1','rrspContrib1','rrspContribEnd1','tfsaContrib1','tfsaContribEnd1','nonregContrib1','nonregContribEnd1','rrsp2','tfsa2','nonreg2','rrspContrib2','rrspContribEnd2','tfsaContrib2','tfsaContribEnd2','nonregContrib2','nonregContribEnd2','employment1','pension1','pensionStart1','cpp1','cppStart1','oas1','oasStart1','employment2','pension2','pensionStart2','cpp2','cppStart2','oas2','oasStart2'];for(const k of fields){const el=$(k);if(el)plan[k]=el.type==='number'?Number(el.value):el.value.trim()}collectOtherIncome();plan.rrsp=n(plan.rrsp1)+n(plan.rrsp2);plan.tfsa=n(plan.tfsa1)+n(plan.tfsa2);plan.nonreg=n(plan.nonreg1)+n(plan.nonreg2);plan.currentIncome=n(plan.employment1)+(plan.household==='couple'?n(plan.employment2):0);plan.pension=n(plan.pension1)+(plan.household==='couple'?n(plan.pension2):0);plan.benefits=n(plan.cpp1)+n(plan.oas1)+(plan.household==='couple'?(n(plan.cpp2)+n(plan.oas2)):0);plan.incomeBridge=0;plan.bridgeYears=0;plan.updatedAt=new Date().toISOString();return plan}
+function syncIncomeNames(){
+ const first=(plan.name1||'Your').trim();
+ const partner=(plan.name2||'Partner').trim();
+ if($('accountName1'))$('accountName1').textContent=first==='Your'?'Your accounts':`${first}’s accounts`;
+ if($('accountName2'))$('accountName2').textContent=partner==='Partner'?"Partner's accounts":`${partner}’s accounts`;
+ if($('incomeName1'))$('incomeName1').textContent=first==='Your'?'Your income sources':`${first}’s income sources`;
+ if($('incomeName2'))$('incomeName2').textContent=partner==='Partner'?"Partner's income sources":`${partner}’s income sources`;
+}
 function bind(){Object.entries(plan).forEach(([k,v])=>{const el=$(k);if(el&&!Array.isArray(v))el.value=v});document.querySelectorAll('[data-household]').forEach(x=>x.classList.toggle('selected',x.dataset.household===plan.household));renderOtherIncome();togglePartner();updateSummary();$('resumeBtn').classList.toggle('hidden',!localStorage.getItem(KEY))}
 function save(show=false){collect();localStorage.setItem(KEY,JSON.stringify(plan));$('saveStatus').textContent='Saved locally';if(show)toast('Plan saved') ;window.dispatchEvent(new CustomEvent('hn:plan-saved',{detail:{plan}}))}
 window.HNCloudBridge={getPlan:()=>structuredClone(plan),hasLocalPlan:()=>!!localStorage.getItem(KEY),applyPlan:p=>{plan={...defaults,...p};save();bind();calculateAndRender();return true},getUpdatedAt:()=>plan.updatedAt};
-function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0);if(id==='picture')updateSummary();if(id==='brief'){calculateAndRender();save()}if(id==='explore'){renderEvidence();showExploreView('evidence')}}
+function writeRoute(screen,view){
+ const route=screen==='explore'&&view?`#explore/${view}`:`#${screen}`;
+ if(location.hash!==route)history.replaceState(null,'',route);
+}
+function readRoute(){
+ const raw=location.hash.replace(/^#/,'');
+ const [screen,view]=raw.split('/');
+ return {screen:VALID_SCREENS.has(screen)?screen:'welcome',view:['evidence','recommendations','scenarios','settings'].includes(view)?view:'evidence'};
+}
+function go(id,options={}){
+ if(!VALID_SCREENS.has(id))id='welcome';
+ document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+ $(id).classList.add('active');
+ window.scrollTo(0,0);
+ if(id==='picture')updateSummary();
+ if(id==='brief'){calculateAndRender();save()}
+ if(id==='explore'){renderEvidence();showExploreView(options.view||currentExploreView||'evidence',true)}
+ if(!options.skipRoute)writeRoute(id,id==='explore'?(options.view||currentExploreView):null);
+}
 function togglePartner(){syncIncomeNames();const single=plan.household==='single';document.querySelectorAll('.partner-field').forEach(x=>{x.classList.toggle('hidden',single);x.setAttribute('aria-hidden',single?'true':'false');x.querySelectorAll('input,select,button').forEach(el=>{el.disabled=single})})}
 function updateSummary(){collect();$('sumSavings').textContent=money(n(plan.rrsp)+n(plan.tfsa)+n(plan.nonreg));$('sumSpend').textContent=money(plan.spend)+'/mo';$('sumAge').textContent='Age '+plan.retire1}
 function previewEngine(p){
@@ -93,13 +121,15 @@ function renderEvidence(){if(!result)result=calculate();const s=result.series,ma
  $('decisionLead').textContent=plan.bridgeYears>0?'How to use the income bridge before both partners are fully retired.':'How to balance spending, timing and registered withdrawals.';$('decisionBox').innerHTML=`<strong>Harbour North recommendation:</strong> ${$('recTitle').textContent}`
 }
 
-function showExploreView(name){
+function showExploreView(name,skipRoute=false){
+ currentExploreView=name;
  const views={evidence:'evidenceView',recommendations:'recommendationsView',scenarios:'scenariosView',settings:'settingsView'};
  Object.values(views).forEach(id=>$(id)?.classList.add('hidden'));
  $(views[name]||views.evidence)?.classList.remove('hidden');
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
  if(name==='recommendations')renderRecommendations();
  if(name==='scenarios')renderScenario();
+ if(!skipRoute&&$('explore').classList.contains('active'))writeRoute('explore',name);
 }
 function recommendationData(){
  if(!result)result=calculate(); const items=[];
@@ -130,7 +160,17 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show')
 document.addEventListener('click',e=>{const add=e.target.closest('[data-add-income]');if(add){collectOtherIncome();const owner=add.dataset.addIncome;plan[`otherIncome${owner}`].push({type:'Other',name:'',amount:0,startAge:owner==='1'?n(plan.age1):n(plan.age2),endAge:110,taxable:true});renderOtherIncome();save();return}const rem=e.target.closest('[data-remove-income]');if(rem){collectOtherIncome();const [owner,i]=rem.dataset.removeIncome.split(':');plan[`otherIncome${owner}`].splice(Number(i),1);renderOtherIncome();save();return}const goEl=e.target.closest('[data-go]');if(goEl)go(goEl.dataset.go);const view=e.target.closest('[data-view]');if(view)showExploreView(view.dataset.view)});
 document.querySelectorAll('[data-household]').forEach(el=>el.addEventListener('click',()=>{plan.household=el.dataset.household;document.querySelectorAll('[data-household]').forEach(x=>x.classList.toggle('selected',x===el));togglePartner()}));
 document.addEventListener('change',e=>{if(e.target.matches('input,select')){collect();save();updateSummary()}});
-$('newPlanBtn').addEventListener('click',()=>{const hasSaved=!!localStorage.getItem(KEY);if(hasSaved&&!confirm('Start a new plan? This will permanently erase the plan saved in this browser.'))return;localStorage.removeItem(KEY);plan=createFreshPlan();result=null;bind();go('household');toast('New plan started')});
+$('newPlanBtn').addEventListener('click',()=>{
+ const hasSaved=!!localStorage.getItem(KEY);
+ if(hasSaved&&!confirm('Start a new plan? This will permanently erase the plan saved in this browser.'))return;
+ localStorage.removeItem(KEY);
+ plan=createFreshPlan();
+ result=null;
+ bind();
+ save();
+ go('household');
+ toast('New plan started');
+});
 $('buildBtn').addEventListener('click',()=>{const b=$('buildBtn'),old=b.textContent;b.disabled=true;b.textContent='Building your retirement picture…';setTimeout(()=>{b.disabled=false;b.textContent=old;go('brief')},650)});
 $('resumeBtn').addEventListener('click',()=>go('brief'));$('whyBtn').addEventListener('click',()=>{toast('Opening the evidence');setTimeout(()=>go('explore'),350)});$('scenarioBtn').addEventListener('click',()=>{go('explore');showExploreView('scenarios')});$('saveBtn').addEventListener('click',()=>save(true));
 $('exportBtn').addEventListener('click',()=>{save();const blob=new Blob([JSON.stringify(plan,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${(plan.name1||'harbour-north').toLowerCase()}-plan.harbour`;a.click();URL.revokeObjectURL(a.href);toast('Plan exported')});
@@ -141,5 +181,7 @@ $('resetScenarioBtn').addEventListener('click',()=>{renderScenario();toast('Alte
 $('adoptScenarioBtn').addEventListener('click',()=>{const alt=scenarioPlan();plan.retire1=alt.retire1;plan.spend=alt.spend;save();bind();calculateAndRender();toast('Alternative adopted');setTimeout(()=>go('brief'),350)});
 $('annualReviewBtn').addEventListener('click',()=>toast('Annual Review will be added after calculation validation.'));
 $('resetBtn').addEventListener('click',()=>{if(confirm('Delete this local alpha plan?')){localStorage.removeItem(KEY);plan=createFreshPlan();result=null;bind();go('welcome');toast('Local plan deleted')}});
+window.addEventListener('hashchange',()=>{const route=readRoute();go(route.screen,{view:route.view,skipRoute:true})});
 bind();
+{const route=readRoute();go(route.screen,{view:route.view,skipRoute:true});}
 </script></body></html>
