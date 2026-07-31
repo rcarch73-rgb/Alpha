@@ -2,8 +2,92 @@
   'use strict';
 
   const num=value=>Number.isFinite(Number(value))?Number(value):0;
+  const fmtCurrency=value=>new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:0}).format(num(value));
+  const RecommendationWeights={
+    monthlyIncome:0.40,
+    endingAssets:0.20,
+    confidence:0.20,
+    taxEfficiency:0.10,
+    flexibility:0.10
+  };
 
-  function scoreCandidate(item,plan,result){
+  function normalizeWeights(weights={}){
+    const defaults=RecommendationWeights;
+    const merged={...defaults,...weights};
+    const total=Object.values(merged).reduce((sum,value)=>sum+Math.max(0,num(value)),0);
+    if(total<=0)return defaults;
+    return Object.fromEntries(Object.entries(merged).map(([key,value])=>[key,Math.max(0,num(value))/total]));
+  }
+
+  function isCandidateResult(item){
+    return !!item&&typeof item==='object'&&(Object.prototype.hasOwnProperty.call(item,'monthlyIncome')||Object.prototype.hasOwnProperty.call(item,'endingAssets')||Object.prototype.hasOwnProperty.call(item,'confidence')||Object.prototype.hasOwnProperty.call(item,'taxes'));
+  }
+
+  function getBaselineMetrics(plan,result){
+    const baselineResult=result||global.window?.result||{};
+    const baselineIncome=num(baselineResult.sustainable);
+    const baselineEnding=num(baselineResult.ending);
+    const baselineConfidence=num(baselineResult.confidence);
+    const baselineTax=num(baselineResult.taxes || (Array.isArray(baselineResult.rows)&&baselineResult.rows.length?baselineResult.rows[baselineResult.rows.length-1]?.projection?.tax:0));
+    return {baselineIncome,baselineEnding,baselineConfidence,baselineTax};
+  }
+
+  function scoreValue(delta,baseline){
+    if(baseline<=0)return delta>0?100:0;
+    return Math.max(0,Math.min(100,delta/baseline*100));
+  }
+
+  function flexibilityValue(item){
+    const inputs=item&&item.modifiedInputs&&typeof item.modifiedInputs==='object'?item.modifiedInputs:{};
+    const count=Object.keys(inputs).filter(key=>inputs[key]!==undefined&&inputs[key]!==null).length;
+    return Math.max(0,Math.min(100,100-Math.max(0,count-1)*20));
+  }
+
+  function buildReasons({incomeScore,endingScore,confidenceScore,taxScore,flexibilityScore,incomeDelta,endingAssetsDelta,confidenceDelta,taxDelta}){
+    const reasons=[];
+    if(incomeScore>0)reasons.push(`Monthly sustainable income improved by ${fmtCurrency(incomeDelta)}.`);
+    if(endingScore>0)reasons.push(`Ending assets increased by ${fmtCurrency(endingAssetsDelta)}.`);
+    if(confidenceScore>0)reasons.push(`Confidence improved by ${Math.round(confidenceDelta)} points.`);
+    if(taxScore>0)reasons.push(`Estimated taxes decreased by ${fmtCurrency(taxDelta)}.`);
+    if(flexibilityScore>0)reasons.push('The scenario changed a single assumption and kept the adjustment simple.');
+    if(!reasons.length)reasons.push('No measurable improvement was detected against the current plan.');
+    return reasons;
+  }
+
+  function evaluateCandidateResult(item,plan,result,options={}){
+    const weights=normalizeWeights(options.weights);
+    const baseline=getBaselineMetrics(plan,result);
+    const monthlyIncome=num(item&&item.monthlyIncome);
+    const endingAssets=num(item&&item.endingAssets);
+    const confidence=num(item&&item.confidence);
+    const taxes=num(item&&item.taxes);
+
+    const incomeDelta=monthlyIncome-baseline.baselineIncome;
+    const endingAssetsDelta=endingAssets-baseline.baselineEnding;
+    const confidenceDelta=confidence-baseline.baselineConfidence;
+    const taxDelta=baseline.baselineTax>0?baseline.baselineTax-taxes:0;
+    const flexibilityDelta=flexibilityValue(item);
+
+    const incomeScore=scoreValue(incomeDelta,baseline.baselineIncome);
+    const endingScore=scoreValue(endingAssetsDelta,baseline.baselineEnding);
+    const confidenceScore=Math.max(0,Math.min(100,confidenceDelta));
+    const taxScore=scoreValue(taxDelta,baseline.baselineTax);
+    const flexibilityScore=Math.max(0,Math.min(100,flexibilityDelta));
+
+    const score=Math.round((incomeScore*weights.monthlyIncome + endingScore*weights.endingAssets + confidenceScore*weights.confidence + taxScore*weights.taxEfficiency + flexibilityScore*weights.flexibility)*100)/100;
+
+    return {
+      score,
+      incomeDelta,
+      endingAssetsDelta,
+      confidenceDelta,
+      taxDelta,
+      reasons:buildReasons({incomeScore,endingScore,confidenceScore,taxScore,flexibilityScore,incomeDelta,endingAssetsDelta,confidenceDelta,taxDelta})
+    };
+  }
+
+  function scoreCandidate(item,plan,result,options={}){
+    if(isCandidateResult(item))return evaluateCandidateResult(item,plan,result,options).score;
     const ratio=num(result&&result.ratio);
     const sustainable=num(result&&result.sustainable);
     const target=num(plan&&plan.spend);
@@ -24,12 +108,15 @@
     return candidateScore + (contextAdjustments[item.id]||0);
   }
 
-  function scoreCandidates(items,plan,result){
-    return (Array.isArray(items)?items:[]).map(item=>({
-      ...item,
-      score:scoreCandidate(item,plan,result)
-    }));
+  function scoreCandidates(items,plan,result,options={}){
+    return (Array.isArray(items)?items:[]).map(item=>{
+      if(isCandidateResult(item)){
+        const scored=evaluateCandidateResult(item,plan,result,options);
+        return {...item,...scored};
+      }
+      return {...item,score:scoreCandidate(item,plan,result,options),reasons:[]};
+    });
   }
 
-  global.HNRecommendationScorer={scoreCandidate,scoreCandidates};
+  global.HNRecommendationScorer={normalizeWeights,scoreCandidate,scoreCandidates,evaluateCandidateResult};
 })(typeof window!=='undefined'?window:globalThis);
