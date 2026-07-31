@@ -210,13 +210,117 @@
     return items;
   }
 
+  function resolvePlan(plan, fallback){
+    const source=plan&&typeof plan==='object'?plan:(fallback&&typeof fallback==='object'?fallback:global.plan);
+    if(!source||typeof source!=='object')return {};
+    return clone(source);
+  }
+
+  function runCandidateTest(options={}){
+    const plan=resolvePlan(options.plan,global.plan);
+    const modifiedInputs=options.modifiedInputs||{};
+    if(!modifiedInputs||typeof modifiedInputs!=='object')throw new TypeError('Candidate tests require modifiedInputs.');
+    const modifiedPlan={...plan,...modifiedInputs};
+    const calculateEngine=options.calculateEngine||global.HNVerifiedEngine&&global.HNVerifiedEngine.calculate;
+    const engineResult=safeCalculate(modifiedPlan,calculateEngine);
+    const monthlyIncome=engineResult&&Number.isFinite(num(engineResult.sustainable))?num(engineResult.sustainable):null;
+    const endingAssets=engineResult&&Number.isFinite(num(engineResult.ending))?num(engineResult.ending):null;
+    const taxes=engineResult&&Array.isArray(engineResult.rows)&&engineResult.rows.length?num(engineResult.rows[engineResult.rows.length-1]?.projection?.tax):
+      (engineResult&&Array.isArray(engineResult.series)&&engineResult.series.length?num(engineResult.series[engineResult.series.length-1]?.tax):null);
+    return {
+      id:options.id,
+      title:options.title,
+      description:options.description,
+      modifiedInputs,
+      monthlyIncome,
+      endingAssets,
+      confidence:engineResult&&Number.isFinite(num(engineResult.confidence))?num(engineResult.confidence):null,
+      taxes,
+      success:Boolean(engineResult&&Number.isFinite(num(engineResult.sustainable))&&Number.isFinite(num(engineResult.ending)))
+    };
+  }
+
+  function retirementAgePlus1(plan,calculateEngine){
+    const current=resolvePlan(plan,global.plan);
+    return runCandidateTest({
+      id:'retirement-age-plus-1',
+      title:'Retirement age +1 year',
+      description:'Test the effect of delaying retirement by one year.',
+      plan:current,
+      calculateEngine,
+      modifiedInputs:{retire1:num(current.retire1)+1}
+    });
+  }
+
+  function retirementAgePlus2(plan,calculateEngine){
+    const current=resolvePlan(plan,global.plan);
+    return runCandidateTest({
+      id:'retirement-age-plus-2',
+      title:'Retirement age +2 years',
+      description:'Test the effect of delaying retirement by two years.',
+      plan:current,
+      calculateEngine,
+      modifiedInputs:{retire1:num(current.retire1)+2}
+    });
+  }
+
+  function reduceSpending250(plan,calculateEngine){
+    const current=resolvePlan(plan,global.plan);
+    return runCandidateTest({
+      id:'reduce-spending-250',
+      title:'Reduce spending by $250/month',
+      description:'Test the effect of lowering monthly spending by $250.',
+      plan:current,
+      calculateEngine,
+      modifiedInputs:{spend:Math.max(0,num(current.spend)-250)}
+    });
+  }
+
+  function reduceSpending500(plan,calculateEngine){
+    const current=resolvePlan(plan,global.plan);
+    return runCandidateTest({
+      id:'reduce-spending-500',
+      title:'Reduce spending by $500/month',
+      description:'Test the effect of lowering monthly spending by $500.',
+      plan:current,
+      calculateEngine,
+      modifiedInputs:{spend:Math.max(0,num(current.spend)-500)}
+    });
+  }
+
+  function increaseSavings250(plan,calculateEngine){
+    const current=resolvePlan(plan,global.plan);
+    return runCandidateTest({
+      id:'increase-savings-250',
+      title:'Increase savings by $250/month',
+      description:'Test the effect of increasing monthly retirement savings contributions by $250.',
+      plan:current,
+      calculateEngine,
+      modifiedInputs:{rrspContrib1:num(current.rrspContrib1)+250}
+    });
+  }
+
+  function increaseSavings500(plan,calculateEngine){
+    const current=resolvePlan(plan,global.plan);
+    return runCandidateTest({
+      id:'increase-savings-500',
+      title:'Increase savings by $500/month',
+      description:'Test the effect of increasing monthly retirement savings contributions by $500.',
+      plan:current,
+      calculateEngine,
+      modifiedInputs:{rrspContrib1:num(current.rrspContrib1)+500}
+    });
+  }
+
   function runSelfTests(){
     const failures=[];let total=0;
     const test=(name,fn)=>{total++;try{if(!fn())failures.push(name)}catch{failures.push(name)}};
     test('Plan-gap candidate generated for a weak plan',()=>buildCandidates({spend:5000,rrsp1:100000,tfsa1:10000,retire1:65,age1:40,household:'single',bridgeYears:0,incomeBridge:0,cpp1:0,cppStart1:65}, {ratio:0.85,sustainable:4200,ending:500000}).some(item=>item.id==='plan-gap'));
     test('Fallback assumptions remain available',()=>fallbackCandidates({cpp1:1000,cpp2:0,household:'single',returnRate:5,inflationRate:2,horizon:95},{ratio:1}).some(item=>item.id==='assumption-review'));
+    test('Retirement age test returns a candidate result',()=>Boolean(retirementAgePlus1({spend:4000,retire1:65,age1:55,rrsp1:100000,tfsa1:20000,nonreg1:5000,household:'single',returnRate:5,inflationRate:2,horizon:95}))); 
+    test('Spending reduction test returns a candidate result',()=>Boolean(reduceSpending250({spend:4000,retire1:65,age1:55,rrsp1:100000,tfsa1:20000,nonreg1:5000,household:'single',returnRate:5,inflationRate:2,horizon:95})));
     return {ok:failures.length===0,total,failed:failures};
   }
 
-  global.HNRecommendationTests={safeCalculate,comparePlan,candidate,buildCandidates,fallbackCandidates,money,num,clone,runSelfTests};
+  global.HNRecommendationTests={safeCalculate,comparePlan,candidate,buildCandidates,fallbackCandidates,money,num,clone,runSelfTests,retirementAgePlus1,retirementAgePlus2,reduceSpending250,reduceSpending500,increaseSavings250,increaseSavings500};
 })(typeof window!=='undefined'?window:globalThis);
