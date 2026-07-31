@@ -144,12 +144,29 @@ function renderRecommendations(){
  $('recommendationList').innerHTML=recommendationData().map((x,i)=>`<article class="recommendation-card"><div class="rec-number">${i+1}</div><div><h3>${x.title}</h3><p class="quiet">${x.copy}</p><button class="btn text" data-view="scenarios">Test this decision →</button></div><div class="rec-impact ${x.impact==='Medium impact'?'medium':''}">${x.impact}</div></article>`).join('');
 }
 function scenarioPlan(){return {...plan,retire1:Number($('scenarioAge').value),spend:Number($('scenarioSpend').value)}}
+function calculateScenario(p){
+ try{
+  const engine=window.HNVerifiedEngine?.calculate;
+  return typeof engine==='function'?engine(p):previewEngine(p);
+ }catch(e){
+  console.error('Scenario calculation failed; using preview fallback.',e);
+  return previewEngine({...p,savings:n(p.rrsp)+n(p.tfsa)+n(p.nonreg),contrib:n(p.rrspContrib1)+n(p.tfsaContrib1)+n(p.nonregContrib1)+(p.household==='couple'?n(p.rrspContrib2)+n(p.tfsaContrib2)+n(p.nonregContrib2):0),contribEndAge:n(p.retire1)});
+ }
+}
 function renderScenario(){
- if(!result)result=calculate(); $('scenarioAge').value=plan.retire1;$('scenarioSpend').value=plan.spend;
+ if(!result)result=calculate();
+ const ageControl=$('scenarioAge'),spendControl=$('scenarioSpend');
+ ageControl.min=String(Math.max(40,n(plan.age1)||40));
+ ageControl.max=String(Math.max(Number(ageControl.min)+1,n(plan.horizon)-1||75));
+ ageControl.value=String(Math.min(Number(ageControl.max),Math.max(Number(ageControl.min),n(plan.retire1)||Number(ageControl.min))));
+ spendControl.max=String(Math.max(15000,Math.ceil((n(plan.spend)||6000)*2/500)*500));
+ spendControl.value=String(Math.max(Number(spendControl.min),n(plan.spend)||Number(spendControl.min)));
  $('assumpReturn').textContent=(n(plan.returnRate)||5)+'% nominal';$('assumpInflation').textContent=(n(plan.inflationRate)||2)+'%';$('assumpProvince').textContent=plan.province||'British Columbia';$('assumpHorizon').textContent='Age '+plan.horizon;updateScenario();
 }
 function updateScenario(){
- const altPlan=scenarioPlan(); const alt=(window.HNVerifiedEngine?.calculate||previewEngine)(altPlan);
+ if(!result)result=calculate();
+ const altPlan=scenarioPlan(),alt=calculateScenario(altPlan);
+ if(!alt||!Number.isFinite(Number(alt.sustainable)))return void($('scenarioDelta').textContent='This alternative could not be calculated. Review the ages and amounts in your plan.');
  $('scenarioAgeLabel').textContent='Age '+altPlan.retire1;$('scenarioSpendLabel').textContent=money(altPlan.spend)+'/mo';
  $('baseSustainable').textContent=money(result.sustainable)+'/mo';$('altSustainable').textContent=money(alt.sustainable)+'/mo';$('baseEnding').textContent=money(result.ending);$('altEnding').textContent=money(alt.ending);
  const d=alt.sustainable-result.sustainable, ageDelta=altPlan.retire1-plan.retire1, spendDelta=altPlan.spend-plan.spend;
