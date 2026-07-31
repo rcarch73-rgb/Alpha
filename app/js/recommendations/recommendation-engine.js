@@ -161,12 +161,69 @@
     return items;
   }
 
-  function rank(plan,result,limit=3){
-    return buildCandidates(plan||{},result||{})
-      .filter(item=>item&&item.title)
-      .sort((a,b)=>b.score-a.score)
-      .slice(0,Math.max(0,limit));
+  function fallbackCandidates(plan,result){
+    const items=[];
+    const cppEntered=num(plan.cpp1)+(plan.household==='couple'?num(plan.cpp2):0);
+    const oasEntered=num(plan.oas1)+(plan.household==='couple'?num(plan.oas2):0);
+    const assumptions=[
+      `Investment return: ${num(plan.returnRate)||5}%`,
+      `Inflation: ${num(plan.inflationRate)||2}%`,
+      `Planning horizon: age ${num(plan.horizon)||95}`
+    ];
+
+    if(cppEntered>0||oasEntered>0){
+      items.push(candidate({
+        id:'benefit-estimates',category:'Government benefits',score:34,impact:'Planning opportunity',confidence:'High',timing:'Review annually',
+        title:'Confirm your CPP and OAS estimates',
+        summary:'Keep government-benefit amounts and start ages aligned with your latest statements.',
+        why:'CPP and OAS can materially affect the retirement-income bridge and later guaranteed income. Current estimates make the projection more useful and reduce avoidable surprises.',
+        how:'Update the plan whenever a new CPP estimate or OAS entitlement amount becomes available, especially before changing a start age.',
+        impactText:'Improves the reliability of projected retirement income.',
+        evidence:['CPP amount','OAS amount','Benefit start ages','Guaranteed income'],
+        comparisonNote:'This is an input-quality action. A financial comparison requires alternate age-specific benefit estimates.'
+      }));
+    }
+
+    items.push(candidate({
+      id:'assumption-review',category:'Planning assumptions',score:32,impact:'Planning opportunity',confidence:'High',timing:'Review annually',
+      title:'Confirm the assumptions behind the plan',
+      summary:'Make sure return, inflation, and planning horizon still reflect how you want to plan.',
+      why:'Small assumption changes can meaningfully alter a long retirement projection. Reviewing them periodically keeps the result grounded without reacting to short-term market noise.',
+      how:'Review the three core assumptions once a year and change them only when your long-term planning view changes.',
+      impactText:assumptions.join(' · '),
+      evidence:['Investment return','Inflation','Planning horizon','Long-term uncertainty'],
+      comparisonNote:'Use the Scenarios screen to test a more conservative or optimistic assumption set without changing the saved plan.'
+    }));
+
+    items.push(candidate({
+      id:'account-refresh',category:'Plan maintenance',score:31,impact:'Planning opportunity',confidence:'High',timing:'After annual statements arrive',
+      title:'Refresh your account balances',
+      summary:'Replace estimates with current RRSP, TFSA, and non-registered balances.',
+      why:'Current balances are one of the strongest drivers of the projection. Updating them annually keeps sustainable spending and ending-asset estimates relevant.',
+      how:'Use your latest statements and update all account balances during the same annual review.',
+      impactText:'Keeps the projection tied to your actual savings.',
+      evidence:['RRSP balance','TFSA balance','Non-registered balance','Contribution levels'],
+      comparisonNote:'This is a data-maintenance action rather than a temporary scenario.'
+    }));
+
+    return items;
   }
 
-  window.HNRecommendationEngine={rank,buildCandidates,safeCalculate,comparePlan};
+  function rank(plan,result,limit=3){
+    const requested=Math.max(0,limit);
+    const ranked=buildCandidates(plan||{},result||{})
+      .filter(item=>item&&item.title)
+      .sort((a,b)=>b.score-a.score);
+    const ids=new Set(ranked.map(item=>item.id));
+    for(const item of fallbackCandidates(plan||{},result||{})){
+      if(ranked.length>=requested)break;
+      if(!ids.has(item.id)){
+        ranked.push(item);
+        ids.add(item.id);
+      }
+    }
+    return ranked.slice(0,requested);
+  }
+
+  window.HNRecommendationEngine={rank,buildCandidates,fallbackCandidates,safeCalculate,comparePlan};
 })();

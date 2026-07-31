@@ -102,5 +102,14 @@
     }
   });
 
+  function renderWhenVisible(){
+    const view=document.getElementById('recommendationsView');
+    if(view&&!view.classList.contains('hidden'))render();
+  }
+
+  window.addEventListener('hn:plan-saved',renderWhenVisible);
+  document.addEventListener('DOMContentLoaded',renderWhenVisible);
+  setTimeout(renderWhenVisible,0);
+
   window.HNRecommendations={getRecommendations,render};
 })();
