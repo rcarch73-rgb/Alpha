@@ -32,3 +32,19 @@
 .next-step-compare-btn{font-weight:850}
 @media(max-width:800px){.opportunity-summary-grid{grid-template-columns:1fr}.opportunity-summary-metrics{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:600px){.opportunity-summary{padding:20px}.opportunity-summary-metrics{grid-template-columns:1fr}.opportunity-summary h3{font-size:25px}}
+
+
+/* CX-03B — focused opportunity deep dive */
+.next-step-ranking{margin-top:18px;padding:17px 18px;border-radius:15px;background:#f6f9f7;border:1px solid var(--line)}
+.next-step-ranking h4{margin:0 0 8px;color:var(--navy)}
+.next-step-ranking p{margin:0;color:var(--muted);line-height:1.55}
+.next-step-ranking ul{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:8px}
+.next-step-ranking li{display:flex;justify-content:space-between;gap:14px;padding-top:8px;border-top:1px solid var(--line);font-size:12px}
+.next-step-ranking li strong{color:var(--navy)}.next-step-ranking li span{color:var(--muted);text-align:right}
+.next-step-plan-change{margin-top:18px;padding:18px;border-radius:16px;background:linear-gradient(135deg,var(--sand),#fffaf0);border:1px solid rgba(213,161,74,.25)}
+.next-step-plan-change h4{margin:0 0 7px;color:var(--navy)}.next-step-plan-change p{margin:0;color:var(--deep);line-height:1.55}
+.next-step-plan-action{margin-top:16px}.next-step-action-note{font-size:11px!important;color:var(--muted)!important;margin-top:8px!important}
+.opportunity-focus-pulse{animation:opportunityPulse 1.4s ease}
+@keyframes opportunityPulse{0%,100%{box-shadow:0 16px 38px rgba(27,68,82,.09)}45%{box-shadow:0 0 0 6px rgba(46,127,134,.14),0 18px 44px rgba(27,68,82,.14)}}
+.plan-field-highlight{border-radius:14px;box-shadow:0 0 0 5px rgba(213,161,74,.18);transition:box-shadow .25s}
+@media(max-width:620px){.next-step-ranking li{flex-direction:column;gap:4px}.next-step-ranking li span{text-align:left}.next-step-plan-action{width:100%}}

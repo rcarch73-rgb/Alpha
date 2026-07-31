@@ -37,7 +37,7 @@
     try{recommendations=window.HNRecommendationEngine?.rank(plan,result,3)||[]}catch(error){console.warn('Dashboard opportunities unavailable.',error)}
     const opp=el('dashboardOpportunities');
     if(opp){
-      opp.innerHTML=recommendations.length?recommendations.map((item,index)=>`<div class="overview-opportunity"><span class="overview-opportunity-number">${index+1}</span><div><strong>${escape(item.title)}</strong><small>${escape(item.summary||item.impactText||item.timing)}</small></div><button type="button" data-dashboard-opportunity>Review →</button></div>`).join(''):'<p class="quiet">No significant changes are recommended right now. Review the plan annually or after a meaningful life change.</p>';
+      opp.innerHTML=recommendations.length?recommendations.map((item,index)=>`<div class="overview-opportunity"><span class="overview-opportunity-number">${index+1}</span><div><strong>${escape(item.title)}</strong><small>${escape(item.summary||item.impactText||item.timing)}</small></div><button type="button" data-dashboard-opportunity="${escape(item.id)}">Explain →</button></div>`).join(''):'<p class="quiet">No significant changes are recommended right now. Review the plan annually or after a meaningful life change.</p>';
     }
 
     const updated=plan.updatedAt?new Date(plan.updatedAt):null;
@@ -53,10 +53,12 @@
   }
 
   document.addEventListener('click',event=>{
-    if(!event.target.closest('[data-dashboard-opportunity]'))return;
-    const explore=document.querySelector('[data-go="explore"]');
-    if(typeof window.go==='function'){window.go('explore');setTimeout(()=>window.showExploreView?.('recommendations'),0)}
-    else explore?.click();
+    const button=event.target.closest('[data-dashboard-opportunity]');
+    if(!button)return;
+    const opportunityId=button.dataset.dashboardOpportunity;
+    try{sessionStorage.setItem('hn.focusOpportunity',opportunityId)}catch(_){}
+    location.hash='#explore/recommendations';
+    setTimeout(()=>window.HNRecommendations?.openOpportunity?.(opportunityId),60);
   });
   window.HNDashboard={render};
 })();
