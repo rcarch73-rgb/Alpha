@@ -71,5 +71,6 @@
     return opportunities;
   }
 
+  if(typeof module!=='undefined'&&module.exports){module.exports=global.HNRecommendationRanking={defaultOptions,isMeaningful,isEligible,createPlanningOpportunity,rankCandidates};}
   global.HNRecommendationRanking={defaultOptions,isMeaningful,isEligible,createPlanningOpportunity,rankCandidates};
 })(typeof window!=='undefined'?window:globalThis);

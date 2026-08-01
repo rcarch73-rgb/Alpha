@@ -118,5 +118,6 @@
     });
   }
 
+  if(typeof module!=='undefined'&&module.exports){module.exports=global.HNRecommendationScorer={normalizeWeights,scoreCandidate,scoreCandidates,evaluateCandidateResult};}
   global.HNRecommendationScorer={normalizeWeights,scoreCandidate,scoreCandidates,evaluateCandidateResult};
 })(typeof window!=='undefined'?window:globalThis);

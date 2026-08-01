@@ -308,28 +308,29 @@
     return {result60,result65,result70,plans:{cpp60:plan60,cpp65:plan65,cpp70:plan70}};
   }
 
-  function retirementAgePlus1(plan,calculateEngine){
+  function buildRetirementAgeSweep(plan,calculateEngine){
     const current=resolvePlan(plan,global.plan);
-    return runCandidateTest({
-      id:'retirement-age-plus-1',
-      title:'Retirement age +1 year',
-      description:'Test the effect of delaying retirement by one year.',
-      plan:current,
-      calculateEngine,
-      modifiedInputs:{retire1:num(current.retire1)+1}
-    });
+    return global.HNScenarioEvaluation?.createRetirementAgeSweep?.(current, calculateEngine||global.HNVerifiedEngine&&global.HNVerifiedEngine.calculate)||[];
+  }
+
+  function retirementAgeMinus2(plan,calculateEngine){
+    return buildRetirementAgeSweep(plan,calculateEngine).find(item=>item.id==='retirement-age-minus-2')||null;
+  }
+
+  function retirementAgeMinus1(plan,calculateEngine){
+    return buildRetirementAgeSweep(plan,calculateEngine).find(item=>item.id==='retirement-age-minus-1')||null;
+  }
+
+  function retirementAgeCurrent(plan,calculateEngine){
+    return buildRetirementAgeSweep(plan,calculateEngine).find(item=>item.id==='retirement-age-current')||null;
+  }
+
+  function retirementAgePlus1(plan,calculateEngine){
+    return buildRetirementAgeSweep(plan,calculateEngine).find(item=>item.id==='retirement-age-plus-1')||null;
   }
 
   function retirementAgePlus2(plan,calculateEngine){
-    const current=resolvePlan(plan,global.plan);
-    return runCandidateTest({
-      id:'retirement-age-plus-2',
-      title:'Retirement age +2 years',
-      description:'Test the effect of delaying retirement by two years.',
-      plan:current,
-      calculateEngine,
-      modifiedInputs:{retire1:num(current.retire1)+2}
-    });
+    return buildRetirementAgeSweep(plan,calculateEngine).find(item=>item.id==='retirement-age-plus-2')||null;
   }
 
   function reduceSpending250(plan,calculateEngine){
@@ -393,7 +394,8 @@
     return {ok:failures.length===0,total,failed:failures};
   }
 
-  global.HNRecommendationTests={safeCalculate,comparePlan,candidate,buildCandidates,fallbackCandidates,money,num,clone,runSelfTests,runCppStrategyDiagnostic,cppAt60,cppAt65,cppAt70,retirementAgePlus1,retirementAgePlus2,reduceSpending250,reduceSpending500,increaseSavings250,increaseSavings500};
+  global.HNRecommendationTests={safeCalculate,comparePlan,candidate,buildCandidates,fallbackCandidates,money,num,clone,runSelfTests,runCppStrategyDiagnostic,cppAt60,cppAt65,cppAt70,buildRetirementAgeSweep,retirementAgeMinus2,retirementAgeMinus1,retirementAgeCurrent,retirementAgePlus1,retirementAgePlus2,reduceSpending250,reduceSpending500,increaseSavings250,increaseSavings500};
+  if(typeof module!=='undefined'&&module.exports){module.exports=global.HNRecommendationTests;}
   if(typeof window!=='undefined' && global!==window){
     window.HNRecommendationTests=global.HNRecommendationTests;
   }
