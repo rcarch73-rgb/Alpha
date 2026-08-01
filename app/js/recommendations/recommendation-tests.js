@@ -240,6 +240,74 @@
     };
   }
 
+  function cppAtAge(plan,age,calculateEngine){
+    const current=resolvePlan(plan,global.plan);
+    const modifiedInputs={};
+    if(current.household==='couple'){ 
+      if(num(current.cpp1)>0||num(current.cppStart1)>0){modifiedInputs.cppStart1=age;}
+      if(num(current.cpp2)>0||num(current.cppStart2)>0){modifiedInputs.cppStart2=age;}
+    }else if(num(current.cpp1)>0||num(current.cppStart1)>0){
+      modifiedInputs.cppStart1=age;
+    }
+    return runCandidateTest({
+      id:`cpp-at-${age}`,
+      title:`CPP starts at age ${age}`,
+      description:`Test the effect of starting CPP at age ${age}.`,
+      plan:current,
+      calculateEngine,
+      modifiedInputs
+    });
+  }
+
+  function cppAt60(plan,calculateEngine){
+    return cppAtAge(plan,60,calculateEngine);
+  }
+
+  function cppAt65(plan,calculateEngine){
+    return cppAtAge(plan,65,calculateEngine);
+  }
+
+  function cppAt70(plan,calculateEngine){
+    return cppAtAge(plan,70,calculateEngine);
+  }
+
+  function runCppStrategyDiagnostic(){
+    const calculateEngine=global.HNVerifiedEngine&&global.HNVerifiedEngine.calculate;
+    if(typeof calculateEngine!=='function')return null;
+    const basePlan=resolvePlan(global.plan,global.plan);
+    const plan60=clone(basePlan);
+    const plan65=clone(basePlan);
+    const plan70=clone(basePlan);
+    if(plan60.household==='couple'){
+      if(num(plan60.cpp1)>0||num(plan60.cppStart1)>0)plan60.cppStart1=60;
+      if(num(plan60.cpp2)>0||num(plan60.cppStart2)>0)plan60.cppStart2=60;
+    }else if(num(plan60.cpp1)>0||num(plan60.cppStart1)>0){
+      plan60.cppStart1=60;
+    }
+    if(plan65.household==='couple'){
+      if(num(plan65.cpp1)>0||num(plan65.cppStart1)>0)plan65.cppStart1=65;
+      if(num(plan65.cpp2)>0||num(plan65.cppStart2)>0)plan65.cppStart2=65;
+    }else if(num(plan65.cpp1)>0||num(plan65.cppStart1)>0){
+      plan65.cppStart1=65;
+    }
+    if(plan70.household==='couple'){
+      if(num(plan70.cpp1)>0||num(plan70.cppStart1)>0)plan70.cppStart1=70;
+      if(num(plan70.cpp2)>0||num(plan70.cppStart2)>0)plan70.cppStart2=70;
+    }else if(num(plan70.cpp1)>0||num(plan70.cppStart1)>0){
+      plan70.cppStart1=70;
+    }
+    const result60=cppAt60(basePlan,calculateEngine);
+    const result65=cppAt65(basePlan,calculateEngine);
+    const result70=cppAt70(basePlan,calculateEngine);
+    console.log(JSON.stringify({result60,result65,result70},null,2));
+    console.log(JSON.stringify({
+      cpp60:{cppStart1:plan60.cppStart1,cppStart2:plan60.cppStart2},
+      cpp65:{cppStart1:plan65.cppStart1,cppStart2:plan65.cppStart2},
+      cpp70:{cppStart1:plan70.cppStart1,cppStart2:plan70.cppStart2}
+    },null,2));
+    return {result60,result65,result70,plans:{cpp60:plan60,cpp65:plan65,cpp70:plan70}};
+  }
+
   function retirementAgePlus1(plan,calculateEngine){
     const current=resolvePlan(plan,global.plan);
     return runCandidateTest({
@@ -317,10 +385,16 @@
     const test=(name,fn)=>{total++;try{if(!fn())failures.push(name)}catch{failures.push(name)}};
     test('Plan-gap candidate generated for a weak plan',()=>buildCandidates({spend:5000,rrsp1:100000,tfsa1:10000,retire1:65,age1:40,household:'single',bridgeYears:0,incomeBridge:0,cpp1:0,cppStart1:65}, {ratio:0.85,sustainable:4200,ending:500000}).some(item=>item.id==='plan-gap'));
     test('Fallback assumptions remain available',()=>fallbackCandidates({cpp1:1000,cpp2:0,household:'single',returnRate:5,inflationRate:2,horizon:95},{ratio:1}).some(item=>item.id==='assumption-review'));
+    test('CPP at 60 test returns a candidate result',()=>Boolean(cppAt60({spend:4000,retire1:65,age1:55,rrsp1:100000,tfsa1:20000,nonreg1:5000,household:'single',cpp1:15000,cppStart1:65,returnRate:5,inflationRate:2,horizon:95})));
+    test('CPP at 65 test returns a candidate result',()=>Boolean(cppAt65({spend:4000,retire1:65,age1:55,rrsp1:100000,tfsa1:20000,nonreg1:5000,household:'single',cpp1:15000,cppStart1:65,returnRate:5,inflationRate:2,horizon:95})));
+    test('CPP at 70 test returns a candidate result',()=>Boolean(cppAt70({spend:4000,retire1:65,age1:55,rrsp1:100000,tfsa1:20000,nonreg1:5000,household:'single',cpp1:15000,cppStart1:65,returnRate:5,inflationRate:2,horizon:95})));
     test('Retirement age test returns a candidate result',()=>Boolean(retirementAgePlus1({spend:4000,retire1:65,age1:55,rrsp1:100000,tfsa1:20000,nonreg1:5000,household:'single',returnRate:5,inflationRate:2,horizon:95}))); 
     test('Spending reduction test returns a candidate result',()=>Boolean(reduceSpending250({spend:4000,retire1:65,age1:55,rrsp1:100000,tfsa1:20000,nonreg1:5000,household:'single',returnRate:5,inflationRate:2,horizon:95})));
     return {ok:failures.length===0,total,failed:failures};
   }
 
-  global.HNRecommendationTests={safeCalculate,comparePlan,candidate,buildCandidates,fallbackCandidates,money,num,clone,runSelfTests,retirementAgePlus1,retirementAgePlus2,reduceSpending250,reduceSpending500,increaseSavings250,increaseSavings500};
+  global.HNRecommendationTests={safeCalculate,comparePlan,candidate,buildCandidates,fallbackCandidates,money,num,clone,runSelfTests,runCppStrategyDiagnostic,cppAt60,cppAt65,cppAt70,retirementAgePlus1,retirementAgePlus2,reduceSpending250,reduceSpending500,increaseSavings250,increaseSavings500};
+  if(typeof window!=='undefined' && global!==window){
+    window.HNRecommendationTests=global.HNRecommendationTests;
+  }
 })(typeof window!=='undefined'?window:globalThis);

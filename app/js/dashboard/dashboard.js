@@ -124,9 +124,21 @@
   function openScenarioCoach(item){
     const definition=scenarioFor(item),plan=currentPlan();
     if(!definition||!plan)return;
-    const base=calculatePlan(plan),alternativePlan={...structuredClone(plan),...definition.patch},alternative=calculatePlan(alternativePlan);
+    const base=calculatePlan(plan);
+    const alternativePlan={...structuredClone(plan),...definition.patch};
+    const alternative=calculatePlan(alternativePlan);
     if(!base||!alternative){window.toast?.('This comparison could not be calculated.');return}
-    activeScenario={id:`scenario-${Date.now()}`,name:definition.name,sourceOpportunityId:item.id,sourceOpportunityTitle:item.title,patch:definition.patch,createdAt:new Date().toISOString(),current:{sustainable:num(base.sustainable),ending:num(base.ending),ratio:num(base.ratio)},alternative:{sustainable:num(alternative.sustainable),ending:num(alternative.ending),ratio:num(alternative.ratio)}};
+
+    const evaluation=window.HNScenarioEvaluation?.createScenarioEvaluation?.(plan,calculatePlan,definition.patch)||null;
+    const comparison=evaluation?{
+      current:{sustainable:num(evaluation.baseline.sustainable),ending:num(evaluation.baseline.ending),ratio:num(evaluation.baseline.ratio)},
+      alternative:{sustainable:num(evaluation.scenario.sustainable),ending:num(evaluation.scenario.ending),ratio:num(evaluation.scenario.ratio)}
+    }:{
+      current:{sustainable:num(base.sustainable),ending:num(base.ending),ratio:num(base.ratio)},
+      alternative:{sustainable:num(alternative.sustainable),ending:num(alternative.ending),ratio:num(alternative.ratio)}
+    };
+
+    activeScenario={id:`scenario-${Date.now()}`,name:definition.name,sourceOpportunityId:item.id,sourceOpportunityTitle:item.title,patch:definition.patch,createdAt:new Date().toISOString(),current:comparison.current,alternative:comparison.alternative};
     const sustainableDelta=activeScenario.alternative.sustainable-activeScenario.current.sustainable;
     const endingDelta=activeScenario.alternative.ending-activeScenario.current.ending;
     const panel=ensureScenarioCoach(),content=el('scenarioCoachContent');
