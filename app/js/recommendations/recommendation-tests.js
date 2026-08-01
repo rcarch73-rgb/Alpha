@@ -240,23 +240,49 @@
     };
   }
 
-  function cppAtAge(plan,age,calculateEngine){
+  function buildCppOptimizationSweep(plan,calculateEngine){
     const current=resolvePlan(plan,global.plan);
-    const modifiedInputs={};
-    if(current.household==='couple'){ 
-      if(num(current.cpp1)>0||num(current.cppStart1)>0){modifiedInputs.cppStart1=age;}
-      if(num(current.cpp2)>0||num(current.cppStart2)>0){modifiedInputs.cppStart2=age;}
-    }else if(num(current.cpp1)>0||num(current.cppStart1)>0){
-      modifiedInputs.cppStart1=age;
-    }
-    return runCandidateTest({
-      id:`cpp-at-${age}`,
-      title:`CPP starts at age ${age}`,
-      description:`Test the effect of starting CPP at age ${age}.`,
-      plan:current,
-      calculateEngine,
-      modifiedInputs
-    });
+    const calculate=calculateEngine||global.HNVerifiedEngine&&global.HNVerifiedEngine.calculate;
+    if(typeof calculate!=='function')return [];
+    const baselineResult=safeCalculate(clone(current),calculate);
+    if(!baselineResult)return [];
+
+    const hasPrimaryCpp=num(current.cpp1)>0||num(current.cppStart1)>0;
+    const hasPartnerCpp=current.household==='couple'&&(num(current.cpp2)>0||num(current.cppStart2)>0);
+    if(!hasPrimaryCpp&&!hasPartnerCpp)return [];
+
+    const ages=[60,65,70];
+    return ages.map(age=>{
+      const patch={};
+      if(hasPrimaryCpp)patch.cppStart1=age;
+      if(hasPartnerCpp)patch.cppStart2=age;
+      const evaluation=global.HNScenarioEvaluation?.createScenarioEvaluation?.(current,calculate,patch,baselineResult);
+      if(!evaluation||!evaluation.scenario||!Number.isFinite(num(evaluation.scenario.sustainable))||!Number.isFinite(num(evaluation.scenario.ending)))return null;
+      const scenario=evaluation.scenario;
+      const taxes=Array.isArray(scenario.rows)&&scenario.rows.length?num(scenario.rows[scenario.rows.length-1]?.projection?.tax):
+        (Array.isArray(scenario.series)&&scenario.series.length?num(scenario.series[scenario.series.length-1]?.tax):0);
+      return {
+        id:`cpp-at-${age}`,
+        title:`CPP starts at age ${age}`,
+        description:`Test the effect of starting CPP at age ${age}.`,
+        modifiedInputs:patch,
+        monthlyIncome:num(scenario.sustainable),
+        endingAssets:num(scenario.ending),
+        confidence:num(scenario.confidence),
+        taxes,
+        success:Boolean(Number.isFinite(num(scenario.sustainable))&&Number.isFinite(num(scenario.ending))),
+        planBefore:evaluation.planBefore,
+        planAfter:evaluation.planAfter,
+        baseline:evaluation.baseline,
+        scenario,
+        deltas:evaluation.deltas,
+        summary:evaluation.summary
+      };
+    }).filter(Boolean);
+  }
+
+  function cppAtAge(plan,age,calculateEngine){
+    return buildCppOptimizationSweep(plan,calculateEngine).find(item=>item.id===`cpp-at-${age}`)||null;
   }
 
   function cppAt60(plan,calculateEngine){
@@ -394,7 +420,7 @@
     return {ok:failures.length===0,total,failed:failures};
   }
 
-  global.HNRecommendationTests={safeCalculate,comparePlan,candidate,buildCandidates,fallbackCandidates,money,num,clone,runSelfTests,runCppStrategyDiagnostic,cppAt60,cppAt65,cppAt70,buildRetirementAgeSweep,retirementAgeMinus2,retirementAgeMinus1,retirementAgeCurrent,retirementAgePlus1,retirementAgePlus2,reduceSpending250,reduceSpending500,increaseSavings250,increaseSavings500};
+  global.HNRecommendationTests={safeCalculate,comparePlan,candidate,buildCandidates,fallbackCandidates,money,num,clone,runSelfTests,runCppStrategyDiagnostic,buildCppOptimizationSweep,cppAt60,cppAt65,cppAt70,buildRetirementAgeSweep,retirementAgeMinus2,retirementAgeMinus1,retirementAgeCurrent,retirementAgePlus1,retirementAgePlus2,reduceSpending250,reduceSpending500,increaseSavings250,increaseSavings500};
   if(typeof module!=='undefined'&&module.exports){module.exports=global.HNRecommendationTests;}
   if(typeof window!=='undefined' && global!==window){
     window.HNRecommendationTests=global.HNRecommendationTests;

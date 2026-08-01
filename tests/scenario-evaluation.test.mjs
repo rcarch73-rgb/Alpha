@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import scenarioEvaluation from '../app/js/scenario-evaluation.js';
+import recommendationTests from '../app/js/recommendations/recommendation-tests.js';
 import { scoreCandidates } from '../app/js/recommendations/recommendation-scorer.js';
 import { rankCandidates } from '../app/js/recommendations/recommendation-ranking.js';
 
@@ -70,6 +71,37 @@ test('retirement-age sweep creates valid candidates and preserves the base plan'
   assert.ok(sweep.every(item => Object.keys(item.modifiedInputs).length === 1));
   assert.ok(sweep.every(item => Object.prototype.hasOwnProperty.call(item.modifiedInputs, 'retire1')));
   assert.equal(calls, 6);
+});
+
+test('cpp optimization sweep creates scoped candidates and preserves the base plan', () => {
+  const basePlan = {
+    spend: 4000,
+    retire1: 65,
+    age1: 55,
+    rrsp1: 100000,
+    tfsa1: 20000,
+    nonreg1: 5000,
+    household: 'single',
+    cpp1: 15000,
+    cppStart1: 65,
+    returnRate: 5,
+    inflationRate: 2,
+    horizon: 95
+  };
+
+  const engine = plan => ({
+    sustainable: Number(plan.spend) + Number(plan.cppStart1) * 10,
+    ending: Number(plan.rrsp1) + Number(plan.tfsa1) + Number(plan.nonreg1),
+    ratio: 1.05,
+    confidence: 80,
+    rows: [{ projection: { tax: 1100 } }]
+  });
+
+  const sweep = recommendationTests.buildCppOptimizationSweep(basePlan, engine);
+  assert.equal(sweep.length, 3);
+  assert.equal(basePlan.cppStart1, 65);
+  assert.ok(sweep.every(item => item.planBefore.cppStart1 === 65));
+  assert.ok(sweep.every(item => Object.keys(item.modifiedInputs).every(key => key === 'cppStart1')));
 });
 
 test('invalid retirement ages are excluded and sweep results remain scorer/ranking compatible', () => {

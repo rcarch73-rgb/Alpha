@@ -53,6 +53,11 @@
     if(num(item.confidenceDelta)<opts.confidenceTolerance)return false;
     if(num(item.incomeDelta)<opts.incomeTolerance)return false;
     if(num(item.score)<opts.minimumScore)return false;
+    const isCppStrategy=typeof item.id==='string' && /^cpp-at-/.test(item.id);
+    if(isCppStrategy){
+      const hasPositiveImpact=num(item.incomeDelta)>0||num(item.endingAssetsDelta)>0||num(item.confidenceDelta)>0||num(item.taxDelta)>0;
+      if(!hasPositiveImpact)return false;
+    }
     return true;
   }
 

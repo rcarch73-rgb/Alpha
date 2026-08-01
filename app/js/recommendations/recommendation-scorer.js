@@ -44,14 +44,20 @@
   }
 
   function buildReasons({incomeScore,endingScore,confidenceScore,taxScore,flexibilityScore,incomeDelta,endingAssetsDelta,confidenceDelta,taxDelta}){
-    const reasons=[];
-    if(incomeScore>0)reasons.push(`Monthly sustainable income improved by ${fmtCurrency(incomeDelta)}.`);
-    if(endingScore>0)reasons.push(`Ending assets increased by ${fmtCurrency(endingAssetsDelta)}.`);
-    if(confidenceScore>0)reasons.push(`Confidence improved by ${Math.round(confidenceDelta)} points.`);
-    if(taxScore>0)reasons.push(`Estimated taxes decreased by ${fmtCurrency(taxDelta)}.`);
-    if(flexibilityScore>0)reasons.push('The scenario changed a single assumption and kept the adjustment simple.');
+    const improvements=[];
+    const disadvantages=[];
+    if(incomeScore>0)improvements.push(`Monthly sustainable income improved by ${fmtCurrency(incomeDelta)}.`);
+    else if(incomeDelta<0)disadvantages.push(`Monthly sustainable income declined by ${fmtCurrency(Math.abs(incomeDelta))}.`);
+    if(endingScore>0)improvements.push(`Ending assets increased by ${fmtCurrency(endingAssetsDelta)}.`);
+    else if(endingAssetsDelta<0)disadvantages.push(`Ending assets declined by ${fmtCurrency(Math.abs(endingAssetsDelta))}.`);
+    if(confidenceScore>0)improvements.push(`Confidence improved by ${Math.round(confidenceDelta)} points.`);
+    else if(confidenceDelta<0)disadvantages.push(`Confidence declined by ${Math.round(Math.abs(confidenceDelta))} points.`);
+    if(taxScore>0)improvements.push(`Estimated taxes decreased by ${fmtCurrency(taxDelta)}.`);
+    else if(taxDelta<0)disadvantages.push(`Estimated taxes increased by ${fmtCurrency(Math.abs(taxDelta))}.`);
+    if(flexibilityScore>0)improvements.push('The scenario changed a single assumption and kept the adjustment simple.');
+    const reasons=[...improvements,...disadvantages];
     if(!reasons.length)reasons.push('No measurable improvement was detected against the current plan.');
-    return reasons;
+    return {improvements,disadvantages,reasons};
   }
 
   function evaluateCandidateResult(item,plan,result,options={}){
@@ -75,6 +81,7 @@
     const flexibilityScore=Math.max(0,Math.min(100,flexibilityDelta));
 
     const score=Math.round((incomeScore*weights.monthlyIncome + endingScore*weights.endingAssets + confidenceScore*weights.confidence + taxScore*weights.taxEfficiency + flexibilityScore*weights.flexibility)*100)/100;
+    const explanations=buildReasons({incomeScore,endingScore,confidenceScore,taxScore,flexibilityScore,incomeDelta,endingAssetsDelta,confidenceDelta,taxDelta});
 
     return {
       score,
@@ -82,7 +89,9 @@
       endingAssetsDelta,
       confidenceDelta,
       taxDelta,
-      reasons:buildReasons({incomeScore,endingScore,confidenceScore,taxScore,flexibilityScore,incomeDelta,endingAssetsDelta,confidenceDelta,taxDelta})
+      reasons:explanations.reasons,
+      improvements:explanations.improvements,
+      disadvantages:explanations.disadvantages
     };
   }
 
