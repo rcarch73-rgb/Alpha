@@ -52,6 +52,17 @@ This baseline is understandable because the active plan and current result are b
 
 Protected financial calculation modules extracted from the established Harbour North engine. It contains timeline, income, tax, and projection logic and exposes the lower-level verified modules used by the adapter.
 
+Audit summary for the protected core:
+
+- **Purpose:** produce authoritative year-by-year retirement timeline, income, tax, spending, and portfolio projection results.
+- **Inputs:** plain plan objects, timeline rows, taxable-income maps, province names, projection options, and indexed rates.
+- **Outputs:** timeline rows, income projections, person-level and household tax estimates, projection rows, and `{ ok, total, failed }` self-test summaries.
+- **Major internal components:** `HNTimeline`, `HNIncome`, `HNTax`, and `HNProjection`, each with a `runSelfTests()` helper.
+- **Dependencies:** built-in JavaScript globals only; the modules communicate through the shared `global` namespace and do not depend on DOM, local storage, routing, or network APIs.
+- **Built-in validation/self-tests:** each module ships deterministic unit-style checks for age math, income gating, tax calculations, spending inflation, and projection reconciliation.
+- **Protected status recommendation:** keep this file in the protected financial core. Any change should require written reason, focused regression evidence, comparison to known results, documented review, and explicit approval before release.
+- **Observable technical debt:** hard-coded tax-year constants, global cross-module coupling, name-based owner matching, coercion of malformed numbers to zero, and a fixed-iteration projection solver.
+
 **Must not:** know about DOM elements, local storage, routing, recommendation presentation, or authentication.
 
 ### `app/js/engine-adapter.js`
