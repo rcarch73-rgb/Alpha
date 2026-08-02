@@ -53,20 +53,51 @@
     };
   }
 
+  function isNoChangeCandidate(plan,candidate){
+    if(!candidate||!candidate.modifiedInputs||typeof candidate.modifiedInputs!=='object')return false;
+    const hasScenarioPayload=Boolean(candidate && (candidate.planBefore || candidate.planAfter || candidate.baseline || candidate.scenario));
+    if(hasScenarioPayload) return false;
+    return Object.entries(candidate.modifiedInputs).every(([key,value])=>{
+      const currentValue=plan?.[key];
+      if(currentValue===undefined||currentValue===null||currentValue==='')return value===undefined||value===null||value==='';
+      if(typeof value==='number'&&typeof currentValue==='string')return Number(currentValue)===value;
+      if(typeof value==='string'&&typeof currentValue==='number')return Number(value)===currentValue;
+      return String(currentValue)===String(value);
+    });
+  }
+
+  function collectMeasurableScenarioCandidates(plan,calculateEngine){
+    const currentPlan=resolvePlan(plan,global.plan);
+    const normalizedPlan=global.HNRecommendationState?.normalizePlan?.(currentPlan)||currentPlan||{};
+    const items=[];
+    const engine=typeof calculateEngine==='function'?calculateEngine:(global.HNVerifiedEngine&&typeof global.HNVerifiedEngine.calculate==='function'?global.HNVerifiedEngine.calculate:null);
+    const retirementSweep=global.HNScenarioEvaluation?.createRetirementAgeSweep?.(normalizedPlan, engine)||[];
+    items.push(...retirementSweep.filter(item=>['retirement-age-plus-1','retirement-age-plus-2'].includes(item.id)&&item.success!==false&&!isNoChangeCandidate(normalizedPlan,item)));
+    items.push(...[cppAt60(normalizedPlan,engine),cppAt65(normalizedPlan,engine),cppAt70(normalizedPlan,engine)].filter(Boolean).filter(item=>!isNoChangeCandidate(normalizedPlan,item)));
+    items.push(...[reduceSpending250(normalizedPlan,engine),reduceSpending500(normalizedPlan,engine)].filter(Boolean).filter(item=>!isNoChangeCandidate(normalizedPlan,item)));
+    items.push(...[increaseSavings250(normalizedPlan,engine),increaseSavings500(normalizedPlan,engine)].filter(Boolean).filter(item=>!isNoChangeCandidate(normalizedPlan,item)));
+    items.push(...(buildOasOptimizationSweep(normalizedPlan,engine)||[]).filter(item=>item.success!==false&&!isNoChangeCandidate(normalizedPlan,item)));
+    return items;
+  }
+
   function buildCandidates(plan,result,options={}){
     const items=[];
     const calculateEngine=options.calculateEngine||global.HNVerifiedEngine&&global.HNVerifiedEngine.calculate;
+    const currentPlan=resolvePlan(plan,global.plan);
+    const normalizedPlan=global.HNRecommendationState?.normalizePlan?.(currentPlan)||currentPlan||{};
     const ratio=num(result&&result.ratio);
-    const rrsp=num(plan.rrsp1)+num(plan.rrsp2||0);
-    const tfsa=num(plan.tfsa1)+num(plan.tfsa2||0);
-    const retirementGap=Math.max(0,num(plan.retire1)-num(plan.age1));
-    const annualSpend=num(plan.spend)*12;
-    const totalSavings=rrsp+tfsa+num(plan.nonreg1)+num(plan.nonreg2||0);
+    const rrsp=num(normalizedPlan.rrsp1)+num(normalizedPlan.rrsp2||0);
+    const tfsa=num(normalizedPlan.tfsa1)+num(normalizedPlan.tfsa2||0);
+    const retirementGap=Math.max(0,num(normalizedPlan.retire1)-num(normalizedPlan.age1));
+    const annualSpend=num(normalizedPlan.spend)*12;
+    const totalSavings=rrsp+tfsa+num(normalizedPlan.nonreg1)+num(normalizedPlan.nonreg2||0);
+
+    items.push(...collectMeasurableScenarioCandidates(normalizedPlan,calculateEngine));
 
     if(ratio>0&&ratio<1){
-      const oneYearLater=comparePlan(plan,result,{retire1:num(plan.retire1)+1,retire2:plan.household==='couple'?num(plan.retire2)+1:num(plan.retire2)},'Retire one year later',calculateEngine);
-      const lowerSpend=Math.max(1000,Math.round(num(plan.spend)*.95/100)*100);
-      const spendingComparison=comparePlan(plan,result,{spend:lowerSpend},`Reduce spending to ${money(lowerSpend)}/month`,calculateEngine);
+      const oneYearLater=comparePlan(normalizedPlan,result,{retire1:num(normalizedPlan.retire1)+1,retire2:normalizedPlan.household==='couple'?num(normalizedPlan.retire2)+1:num(normalizedPlan.retire2)},'Retire one year later',calculateEngine);
+      const lowerSpend=Math.max(1000,Math.round(num(normalizedPlan.spend)*.95/100)*100);
+      const spendingComparison=comparePlan(normalizedPlan,result,{spend:lowerSpend},`Reduce spending to ${money(lowerSpend)}/month`,calculateEngine);
       const comparison=[oneYearLater,spendingComparison].filter(Boolean).sort((a,b)=>b.ratioDelta-a.ratioDelta)[0]||null;
       items.push(candidate({
         id:'plan-gap',category:'Plan sustainability',score:110+(1-ratio)*100,impact:'High impact',confidence:'High',timing:'Act now',comparison,
@@ -74,19 +105,19 @@
         summary:'A focused adjustment may restore the plan without forcing several changes at once.',
         why:'Your current spending target is above the amount supported by the projection. Harbour North prioritizes the smallest practical change because it is easier to understand, test, and maintain.',
         how:'Start with the comparison below. Keep the smallest adjustment that brings sustainable spending back in line with your target.',
-        impactText:comparison?comparison.summary:`Current sustainable spending is ${money(result&&result.sustainable)} per month versus a ${money(plan.spend)} target.`,
+        impactText:comparison?comparison.summary:`Current sustainable spending is ${money(result&&result.sustainable)} per month versus a ${money(normalizedPlan.spend)} target.`,
         evidence:['Sustainable spending','Portfolio longevity','Retirement timing','Household cash flow']
       }));
     }
 
-    if(num(plan.bridgeYears)>0&&num(plan.incomeBridge)>0){
+    if(num(normalizedPlan.bridgeYears)>0&&num(normalizedPlan.incomeBridge)>0){
       items.push(candidate({
         id:'income-bridge',category:'Income timing',score:98,impact:'High impact',confidence:'High',timing:'Before retirement',
         title:'Plan the income-bridge years deliberately',
         summary:'Coordinate income and withdrawals before both partners are fully retired.',
         why:'The years between the first retirement date and the start of all pensions and government benefits can place unusual pressure on savings. Treating those years separately can improve tax flexibility and reduce reactive withdrawals.',
         how:'Confirm which income continues during the bridge, then compare measured RRSP withdrawals and available TFSA funds before changing the saved plan.',
-        impactText:`The bridge spans ${num(plan.bridgeYears)} year${num(plan.bridgeYears)===1?'':'s'} and includes approximately ${money(plan.incomeBridge)} of annual income.`,
+        impactText:`The bridge spans ${num(normalizedPlan.bridgeYears)} year${num(normalizedPlan.bridgeYears)===1?'':'s'} and includes approximately ${money(normalizedPlan.incomeBridge)} of annual income.`,
         evidence:['Retirement dates','Temporary income','Pension start dates','Government benefits'],
         comparisonNote:'A reliable dollar comparison requires withdrawal-order controls that are not yet exposed in the customer scenario screen.'
       }));
@@ -120,8 +151,8 @@
       }));
     }
 
-    const cppStart=num(plan.cppStart1||65);
-    if(num(plan.cpp1)>0&&cppStart<70&&ratio>=.95){
+    const cppStart=num(normalizedPlan.cppStart1||65);
+    if(num(normalizedPlan.cpp1)>0&&cppStart<70&&ratio>=.95){
       items.push(candidate({
         id:'cpp-timing',category:'Guaranteed income',score:72+(ratio>=1.05?8:0),impact:'Planning opportunity',confidence:'Preliminary',timing:'One year before CPP begins',
         title:'Compare delaying CPP',
@@ -135,15 +166,15 @@
     }
 
     if(annualSpend>0&&ratio>=1.15){
-      const higherSpend=Math.round(num(plan.spend)*1.05/100)*100;
-      const comparison=comparePlan(plan,result,{spend:higherSpend},`Test ${money(higherSpend)}/month spending`,calculateEngine);
+      const higherSpend=Math.round(num(normalizedPlan.spend)*1.05/100)*100;
+      const comparison=comparePlan(normalizedPlan,result,{spend:higherSpend},`Test ${money(higherSpend)}/month spending`,calculateEngine);
       items.push(candidate({
         id:'spending-flexibility',category:'Lifestyle flexibility',score:58,impact:'Planning opportunity',confidence:'Moderate',timing:'Review before retirement',comparison,
         title:'Decide how to use the plan’s extra flexibility',
         summary:'The projection supports more than the spending target currently entered.',
         why:'A healthy margin can support additional lifestyle spending, a stronger legacy, or more conservative assumptions. The important decision is how you want to use that flexibility.',
         how:'Test a modest spending increase and compare it with keeping the extra margin as a reserve or legacy goal.',
-        impactText:comparison?comparison.summary:`Modelled sustainable spending exceeds the target by ${money(num(result.sustainable)-num(plan.spend))} per month.`,
+        impactText:comparison?comparison.summary:`Modelled sustainable spending exceeds the target by ${money(num(result.sustainable)-num(normalizedPlan.spend))} per month.`,
         evidence:['Sustainable spending','Ending assets','Lifestyle target','Planning margin']
       }));
     }
@@ -221,7 +252,7 @@
     const modifiedInputs=options.modifiedInputs||{};
     if(!modifiedInputs||typeof modifiedInputs!=='object')throw new TypeError('Candidate tests require modifiedInputs.');
     const modifiedPlan={...plan,...modifiedInputs};
-    const calculateEngine=options.calculateEngine||global.HNVerifiedEngine&&global.HNVerifiedEngine.calculate;
+    const calculateEngine=typeof options.calculateEngine==='function'?options.calculateEngine:(global.HNVerifiedEngine&&typeof global.HNVerifiedEngine.calculate==='function'?global.HNVerifiedEngine.calculate:null);
     const engineResult=safeCalculate(modifiedPlan,calculateEngine);
     const monthlyIncome=engineResult&&Number.isFinite(num(engineResult.sustainable))?num(engineResult.sustainable):null;
     const endingAssets=engineResult&&Number.isFinite(num(engineResult.ending))?num(engineResult.ending):null;
@@ -242,7 +273,7 @@
 
   function buildCppOptimizationSweep(plan,calculateEngine){
     const current=resolvePlan(plan,global.plan);
-    const calculate=calculateEngine||global.HNVerifiedEngine&&global.HNVerifiedEngine.calculate;
+    const calculate=typeof calculateEngine==='function'?calculateEngine:(global.HNVerifiedEngine&&typeof global.HNVerifiedEngine.calculate==='function'?global.HNVerifiedEngine.calculate:null);
     if(typeof calculate!=='function')return [];
     const baselineResult=safeCalculate(clone(current),calculate);
     if(!baselineResult)return [];
@@ -281,6 +312,85 @@
     }).filter(Boolean);
   }
 
+  function buildOasOptimizationSweep(plan,calculateEngine){
+    const current=resolvePlan(plan,global.plan);
+    const calculate=typeof calculateEngine==='function'?calculateEngine:(global.HNVerifiedEngine&&typeof global.HNVerifiedEngine.calculate==='function'?global.HNVerifiedEngine.calculate:null);
+    if(typeof calculate!=='function')return [];
+    const baselineResult=safeCalculate(clone(current),calculate);
+    if(!baselineResult)return [];
+
+    const hasPrimaryOas=num(current.oas1)>0;
+    const hasPartnerOas=current.household==='couple'&&(num(current.oas2)>0);
+    if(!hasPrimaryOas&&!hasPartnerOas)return [];
+
+    const baselineOasStart=num(hasPrimaryOas?current.oasStart1:current.oasStart2||65);
+    const ages=[65,66,67,68,69,70];
+    return ages.map(age=>{
+      const patch={};
+      if(hasPrimaryOas)patch.oasStart1=age;
+      if(hasPartnerOas)patch.oasStart2=age;
+      const evaluation=global.HNScenarioEvaluation?.createScenarioEvaluation?.(current,calculate,patch,baselineResult);
+      if(!evaluation||!evaluation.scenario||!Number.isFinite(num(evaluation.scenario.sustainable))||!Number.isFinite(num(evaluation.scenario.ending)))return null;
+      const scenario=evaluation.scenario;
+      const taxes=Array.isArray(scenario.rows)&&scenario.rows.length?num(scenario.rows[scenario.rows.length-1]?.projection?.tax):
+        (Array.isArray(scenario.series)&&scenario.series.length?num(scenario.series[scenario.series.length-1]?.tax):0);
+      const availableMetrics={
+        income:true,
+        ending:true,
+        confidence:Number.isFinite(num(scenario.confidence)),
+        taxes:Number.isFinite(num(taxes))&&num(taxes)!==0,
+        guaranteedIncomeTiming:true
+      };
+      return {
+        id:`oas-at-${age}`,
+        title:`OAS starts at age ${age}`,
+        description:`Test the effect of starting OAS at age ${age}.`,
+        modifiedInputs:patch,
+        monthlyIncome:num(scenario.sustainable),
+        endingAssets:num(scenario.ending),
+        confidence:num(scenario.confidence),
+        taxes,
+        success:Boolean(Number.isFinite(num(scenario.sustainable))&&Number.isFinite(num(scenario.ending))),
+        availableMetrics,
+        guaranteedIncomeTimingDelta:age-baselineOasStart,
+        planBefore:evaluation.planBefore,
+        planAfter:evaluation.planAfter,
+        baseline:evaluation.baseline,
+        scenario,
+        deltas:evaluation.deltas,
+        summary:evaluation.summary
+      };
+    }).filter(Boolean);
+  }
+
+  function oasAtAge(plan,age,calculateEngine){
+    return buildOasOptimizationSweep(plan,calculateEngine).find(item=>item.id===`oas-at-${age}`)||null;
+  }
+
+  function oasAt65(plan,calculateEngine){
+    return oasAtAge(plan,65,calculateEngine);
+  }
+
+  function oasAt66(plan,calculateEngine){
+    return oasAtAge(plan,66,calculateEngine);
+  }
+
+  function oasAt67(plan,calculateEngine){
+    return oasAtAge(plan,67,calculateEngine);
+  }
+
+  function oasAt68(plan,calculateEngine){
+    return oasAtAge(plan,68,calculateEngine);
+  }
+
+  function oasAt69(plan,calculateEngine){
+    return oasAtAge(plan,69,calculateEngine);
+  }
+
+  function oasAt70(plan,calculateEngine){
+    return oasAtAge(plan,70,calculateEngine);
+  }
+
   function cppAtAge(plan,age,calculateEngine){
     return buildCppOptimizationSweep(plan,calculateEngine).find(item=>item.id===`cpp-at-${age}`)||null;
   }
@@ -298,7 +408,7 @@
   }
 
   function runCppStrategyDiagnostic(){
-    const calculateEngine=global.HNVerifiedEngine&&global.HNVerifiedEngine.calculate;
+    const calculateEngine=global.HNVerifiedEngine&&typeof global.HNVerifiedEngine.calculate==='function'?global.HNVerifiedEngine.calculate:null;
     if(typeof calculateEngine!=='function')return null;
     const basePlan=resolvePlan(global.plan,global.plan);
     const plan60=clone(basePlan);
@@ -336,7 +446,7 @@
 
   function buildRetirementAgeSweep(plan,calculateEngine){
     const current=resolvePlan(plan,global.plan);
-    return global.HNScenarioEvaluation?.createRetirementAgeSweep?.(current, calculateEngine||global.HNVerifiedEngine&&global.HNVerifiedEngine.calculate)||[];
+    return global.HNScenarioEvaluation?.createRetirementAgeSweep?.(current, typeof calculateEngine==='function'?calculateEngine:(global.HNVerifiedEngine&&typeof global.HNVerifiedEngine.calculate==='function'?global.HNVerifiedEngine.calculate:null))||[];
   }
 
   function retirementAgeMinus2(plan,calculateEngine){
@@ -420,7 +530,7 @@
     return {ok:failures.length===0,total,failed:failures};
   }
 
-  global.HNRecommendationTests={safeCalculate,comparePlan,candidate,buildCandidates,fallbackCandidates,money,num,clone,runSelfTests,runCppStrategyDiagnostic,buildCppOptimizationSweep,cppAt60,cppAt65,cppAt70,buildRetirementAgeSweep,retirementAgeMinus2,retirementAgeMinus1,retirementAgeCurrent,retirementAgePlus1,retirementAgePlus2,reduceSpending250,reduceSpending500,increaseSavings250,increaseSavings500};
+  global.HNRecommendationTests={safeCalculate,comparePlan,candidate,buildCandidates,fallbackCandidates,money,num,clone,runSelfTests,runCppStrategyDiagnostic,buildCppOptimizationSweep,cppAt60,cppAt65,cppAt70,buildOasOptimizationSweep,oasAt65,oasAt66,oasAt67,oasAt68,oasAt69,oasAt70,buildRetirementAgeSweep,retirementAgeMinus2,retirementAgeMinus1,retirementAgeCurrent,retirementAgePlus1,retirementAgePlus2,reduceSpending250,reduceSpending500,increaseSavings250,increaseSavings500};
   if(typeof module!=='undefined'&&module.exports){module.exports=global.HNRecommendationTests;}
   if(typeof window!=='undefined' && global!==window){
     window.HNRecommendationTests=global.HNRecommendationTests;

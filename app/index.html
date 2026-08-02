@@ -55,9 +55,9 @@
 <div class="income-person partner-field"><div class="section-heading"><div><span class="section-kicker">Partner income</span><h3 id="incomeName2">Liz’s income sources</h3></div><span class="section-note">Annual amounts before tax</span></div><div class="field-grid income-grid"><div class="field"><label for="employment2">Employment income</label><input id="employment2" type="number" min="0" step="1000" value="110000"><small>Ends at your partner’s retirement age.</small></div><div class="field"><label for="pension2">Pension income</label><input id="pension2" type="number" min="0" step="500" value="38400"></div><div class="field compact"><label for="pensionStart2">Pension starts at age</label><input id="pensionStart2" type="number" min="40" max="90" value="55"></div><div class="field"><label for="cpp2">Annual CPP income (before tax)</label><input id="cpp2" type="number" min="0" step="100" value="16400"></div><div class="field compact"><label for="cppStart2">CPP starts at age</label><input id="cppStart2" type="number" min="60" max="70" value="65"></div><div class="field"><label for="oas2">Annual OAS income (before tax)</label><input id="oas2" type="number" min="0" step="100" value="8600"></div><div class="field compact"><label for="oasStart2">OAS starts at age</label><input id="oasStart2" type="number" min="65" max="70" value="65"></div></div><div class="other-income"><div class="section-heading"><div><h3>Other income sources</h3><p class="quiet">Rental income, side gigs, annuities and other temporary or ongoing income.</p></div><button type="button" class="btn secondary small-btn" data-add-income="2">+ Add income source</button></div><div id="otherIncomeList2" class="income-list"></div></div></div>
 <div class="input-section"><div class="field-grid"><div class="field"><label for="province">Province</label><select id="province"><option>British Columbia</option><option>Alberta</option><option>Ontario</option><option>Nova Scotia</option><option>New Brunswick</option><option>Manitoba</option><option>Saskatchewan</option><option>Prince Edward Island</option><option>Newfoundland and Labrador</option><option>Quebec</option></select></div></div></div><div class="summary"><div class="quiet">Harbour North will test</div><div class="summary-grid"><div class="metric"><span>Current savings</span><strong id="sumSavings">—</strong></div><div class="metric"><span>Target spending</span><strong id="sumSpend">—</strong></div><div class="metric"><span>Retirement age</span><strong id="sumAge">—</strong></div></div></div><div class="flow-actions"><button class="btn text" data-go="goal">← Back</button><button class="btn primary" id="buildBtn">Build my Retirement Brief →</button></div></div></main></div></section>
 <section class="screen" id="brief"><div class="brief-shell overview-shell"><div class="topbar"><div class="brand">Harbour North</div><div class="account"><span id="planName">My plan</span><span class="cloud" id="saveStatus">Saved locally</span><button class="account-button hidden" id="accountButton" type="button">Account</button></div></div><main class="brief overview-main">
-<section class="overview-hero"><div class="overview-hero-copy"><div class="eyebrow" id="dashboardGreeting">Your retirement overview</div><div class="status-pill" id="statusPill">✓ Your plan is on track</div><h1 class="overview-title" id="answer">Your retirement plan is taking shape.</h1><p class="answer-sub" id="answerSub"></p><div class="overview-hero-actions"><button class="btn primary" data-go="explore" data-view="recommendations">Review your opportunities →</button><button class="btn secondary" data-go="goal">Adjust my plan</button></div></div><div class="overview-income"><span>Estimated sustainable after-tax spending</span><strong id="sustainable">—</strong><small>per month, in today’s dollars</small><div class="overview-target" id="dashboardTarget">Target —</div></div></section>
+<section class="overview-hero"><div class="overview-hero-copy"><div class="eyebrow" id="dashboardGreeting">Your retirement overview</div><div class="status-pill" id="statusPill">✓ Your plan is on track</div><h1 class="overview-title" id="answer">Your retirement plan is taking shape.</h1><p class="answer-sub" id="answerSub"></p><div class="overview-hero-actions"><button class="btn primary" data-go="explore" data-view="recommendations">Review your opportunities →</button><button class="btn secondary" data-go="goal">Adjust my plan</button><button class="btn secondary hidden" id="completePlanActionBtn" data-go="picture">Complete my plan →</button></div></div><div class="overview-income"><span>Estimated sustainable after-tax spending</span><strong id="sustainable">—</strong><small>per month, in today’s dollars</small><div class="overview-target" id="dashboardTarget">Target —</div></div></section>
 <section class="overview-section"><div class="overview-section-head"><div><div class="eyebrow">At a glance</div><h2>Retirement snapshot</h2></div><button class="btn text" data-go="explore" data-view="evidence">Explore the evidence →</button></div><div class="overview-snapshot"><article><span>Target retirement</span><strong id="metricRetire">—</strong><small id="dashboardRetireStatus">Based on your current plan</small></article><article><span>Portfolio at retirement</span><strong id="dashboardRetirementPortfolio">—</strong><small>Projected in today’s dollars</small></article><article><span>Planning confidence</span><strong id="confidence">—</strong><div class="meter"><i id="meter"></i></div><small id="confidenceCopy"></small></article><article><span>Estimated ending assets</span><strong id="metricLegacy">—</strong><small>At plan horizon <span id="metricHorizon">—</span></small></article></div></section>
-<section class="overview-grid"><article class="overview-card overview-opportunities"><div class="overview-card-head"><div><div class="eyebrow">What to consider next</div><h3>Your three opportunities</h3></div><button class="btn text" data-go="explore" data-view="recommendations">View details →</button></div><div id="dashboardOpportunities" class="overview-opportunity-list"><p class="quiet">Calculating your highest-priority opportunities…</p></div></article><article class="overview-card"><div class="eyebrow">Plan health</div><h3>How the plan is holding up</h3><div id="dashboardHealth" class="overview-health"></div></article></section>
+<section class="overview-grid"><article class="overview-card overview-opportunities"><div class="overview-card-head"><div><div class="eyebrow">What to consider next</div><h3 id="dashboardOpportunitiesHeading">Your three opportunities</h3></div><button class="btn text" data-go="explore" data-view="recommendations">View details →</button></div><div id="dashboardOpportunities" class="overview-opportunity-list"><p class="quiet">Calculating your highest-priority opportunities…</p></div></article><article class="overview-card"><div class="eyebrow">Plan health</div><h3>How the plan is holding up</h3><div id="dashboardHealth" class="overview-health"></div></article></section>
 <section class="overview-grid lower"><article class="overview-card"><div class="eyebrow">Plan activity</div><h3>What’s current</h3><div id="dashboardChanges" class="overview-activity"></div></article><article class="overview-card"><div class="eyebrow">Next review</div><h3 id="dashboardReviewDate">Review annually</h3><p class="quiet" id="dashboardReviewCopy">Refresh account balances and benefit estimates after annual statements arrive, or whenever your circumstances change.</p><button class="btn secondary" data-go="explore" data-view="review">Open Plan Review</button></article></section>
 <section class="recommend overview-legacy-recommend"><div><div class="eyebrow">Your next opportunity</div><h3 id="recTitle">Review your retirement income bridge.</h3><p id="recCopy"></p></div><button class="btn secondary" id="whyBtn">See why</button></section>
 </main></div></section>
@@ -66,8 +66,16 @@
 <script src="js/verified-engine.js"></script>
 <script src="js/engine-adapter.js"></script>
 <script src="js/scenario-evaluation.js"></script>
+<script src="js/active-plan.js"></script>
+<script src="js/recommendations/recommendation-state.js"></script>
+<script src="js/recommendations/recommendation-tests.js"></script>
+<script src="js/recommendations/recommendation-scorer.js"></script>
+<script src="js/recommendations/recommendation-ranking.js"></script>
+<script src="js/recommendations/recommendation-engine.js"></script>
+<script src="js/recommendations/recommendation-ui.js"></script>
 <script>
 const KEY='harbourNorth.foundation.v0.1';
+const ACTIVE_PLAN_STORAGE_KEY='harbourNorth.activePlanId';
 const VALID_SCREENS=new Set(['welcome','signIn','createAccount','myPlans','household','goal','picture','brief','explore']);
 let currentExploreView='evidence';
 const $=id=>document.getElementById(id); const n=v=>Number.isFinite(Number(v))?Number(v):0; const money=n=>new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:0}).format(Number(n)||0);
@@ -75,7 +83,145 @@ const defaults={schemaVersion:'foundation-0.4.4',accountFirstName:'',accountLast
 const freshDefaults={...defaults,household:'couple',name1:'',age1:50,name2:'',age2:50,spend:5000,retire1:65,retire2:65,horizon:95,rrsp1:0,tfsa1:0,nonreg1:0,rrspContrib1:0,rrspContribEnd1:65,tfsaContrib1:0,tfsaContribEnd1:65,nonregContrib1:0,nonregContribEnd1:65,rrsp2:0,tfsa2:0,nonreg2:0,rrspContrib2:0,rrspContribEnd2:65,tfsaContrib2:0,tfsaContribEnd2:65,nonregContrib2:0,nonregContribEnd2:65,employment1:0,pension1:0,pensionStart1:65,cpp1:0,cppStart1:65,oas1:0,oasStart1:65,otherIncome1:[],employment2:0,pension2:0,pensionStart2:65,cpp2:0,cppStart2:65,oas2:0,oasStart2:65,otherIncome2:[],updatedAt:null};
 function createFreshPlan(){return structuredClone(freshDefaults)}
 function migrate(p){const x={...defaults,...p};if(p.rrsp!==undefined&&!p.rrsp1)x.rrsp1=p.rrsp;if(p.tfsa!==undefined&&!p.tfsa1)x.tfsa1=p.tfsa;if(p.nonreg!==undefined&&!p.nonreg1)x.nonreg1=p.nonreg;if(p.contrib!==undefined&&!p.rrspContrib1)x.rrspContrib1=p.contrib;if(p.contribEndAge!==undefined&&!p.rrspContribEnd1)x.rrspContribEnd1=p.contribEndAge;if(!Array.isArray(p.otherIncome1)){x.otherIncome1=n(p.otherAmount1)>0?[{type:'Other',name:p.otherLabel1||'Other income',amount:n(p.otherAmount1),startAge:n(p.otherStart1),endAge:n(p.otherEnd1),taxable:true}]:defaults.otherIncome1}if(!Array.isArray(p.otherIncome2)){x.otherIncome2=n(p.otherAmount2)>0?[{type:'Other',name:p.otherLabel2||'Other income',amount:n(p.otherAmount2),startAge:n(p.otherStart2),endAge:n(p.otherEnd2),taxable:true}]:[]}[1,2].forEach(owner=>{x[`otherIncome${owner}`]=(x[`otherIncome${owner}`]||[]).map(item=>({...item,taxable:item.taxable!==undefined?Boolean(item.taxable):item.type!=='WCB / settlement'}))});return x}
-let plan=migrate(JSON.parse(localStorage.getItem(KEY)||'null')||{}),result=null;
+function loadStoredPlan(){
+  try{
+    const stored=JSON.parse(localStorage.getItem(KEY)||'null');
+    return stored&&typeof stored==='object'?migrate(stored):null;
+  }catch(error){
+    console.warn('Could not restore the stored plan.',error);
+    return null;
+  }
+}
+function resolveStartupPlan(){
+  const fallbackPlan=createFreshPlan();
+  const storedPlan=loadStoredPlan();
+  const activePlanId=localStorage.getItem(ACTIVE_PLAN_STORAGE_KEY);
+  const resolved=window.HNActivePlan?.resolveActivePlan?.({
+    activePlanId,
+    cloudPlan:null,
+    savedPlan:storedPlan,
+    workingPlan:storedPlan,
+    fallbackPlan
+  });
+  return resolved?.plan||fallbackPlan;
+}
+let startupCoordinator=null;
+let startupState={plan:null,calculation:null,recommendations:[],readiness:null};
+let startupRenderVersion=0;
+let startupPlanResolved=false;
+let startupSelection=null;
+
+function normalizeStartupPlan(candidate){
+  const fallbackPlan=createFreshPlan();
+  const normalized=window.HNRecommendationState?.normalizePlan?.(candidate||fallbackPlan)||candidate||fallbackPlan;
+  return normalized&&typeof normalized==='object'?normalized:fallbackPlan;
+}
+
+function createStartupState(planCandidate, calculation, recommendations, readiness){
+  const normalizedPlan=normalizeStartupPlan(planCandidate);
+  const nextState={plan:normalizedPlan,calculation:calculation||null,recommendations:Array.isArray(recommendations)?recommendations:[],readiness:readiness||getSharedReadiness(normalizedPlan,calculation||null)};
+  window.plan=normalizedPlan;
+  window.result=nextState.calculation;
+  window.recommendations=nextState.recommendations;
+  window.pageState=nextState;
+  pageState=nextState;
+  plan=normalizedPlan;
+  result=nextState.calculation;
+  return nextState;
+}
+
+function renderStartupState(selection){
+  const normalizedPlan=normalizeStartupPlan(selection?.plan||plan||createFreshPlan());
+  const calculation=selection?.calculation||null;
+  createStartupState(normalizedPlan,calculation,[],getSharedReadiness(normalizedPlan,calculation));
+  if(selection?.source!=='incomplete'){calculateAndRender();}
+  else{calculateAndRender();}
+}
+
+function finalizeStartupSelection(selection){
+  if(!selection)return null;
+  startupSelection=selection;
+  const planCandidate=selection.plan||createFreshPlan();
+  const normalizedPlan=normalizeStartupPlan(planCandidate);
+  const readiness=getSharedReadiness(normalizedPlan,null);
+  const shouldCalculate=Boolean(selection.isComplete&&selection.source!=='incomplete');
+  const calculation=shouldCalculate?window.HNVerifiedEngine?.calculate?.(normalizedPlan)||null:null;
+  const recommendations=shouldCalculate?getRecommendationsWithFallback(normalizedPlan,calculation):[];
+  const nextState=createStartupState(normalizedPlan,calculation,recommendations,readiness);
+  pageState=nextState;
+  startupState=nextState;
+  startupPlanResolved=true;
+  startupRenderVersion+=1;
+  window.dispatchEvent(new CustomEvent('hn:startup-plan-ready',{detail:{plan:normalizedPlan,calculation,source:selection.source,selection}}));
+  return selection;
+}
+
+function ensureStartupCoordinator(){
+  if(startupCoordinator)return startupCoordinator;
+  startupCoordinator=window.HNActivePlan?.createStartupCoordinator?.({
+    fallbackPlan:createFreshPlan(),
+    calculatePlan:plan=>window.HNVerifiedEngine?.calculate?.(plan)||null,
+    render:selection=>finalizeStartupSelection(selection)
+  });
+  return startupCoordinator;
+}
+
+function hydrateStartupPlan(candidate={}){
+  const coordinator=ensureStartupCoordinator();
+  if(!coordinator)return null;
+  return coordinator.apply({
+    activePlanId:candidate.activePlanId ?? localStorage.getItem(ACTIVE_PLAN_STORAGE_KEY),
+    cloudPlan:candidate.cloudPlan || null,
+    selectedPlan:candidate.selectedPlan || null,
+    mostRecentSavedPlan:candidate.mostRecentSavedPlan || null,
+    workingPlan:candidate.workingPlan || null,
+    fallbackPlan:candidate.fallbackPlan || createFreshPlan()
+  });
+}
+
+let plan=createFreshPlan(),result=null;
+let pageState={plan,calculation:null,recommendations:[],readiness:null};
+let recommendationFallbackWarningShown=false;
+function getSharedReadiness(planToCheck, calculation){
+  const normalizedPlan=window.HNRecommendationState?.normalizePlan?.(planToCheck||plan)||planToCheck||plan;
+  const baseReadiness=window.HNRecommendationState?.getPlanReadiness?.(normalizedPlan, calculation)||{isComplete:true,displayState:'Ready',heading:'Your planning opportunities',message:'',actionLabel:'Review my plan',actionTarget:'picture',planReadiness:'ready',calculation};
+  return baseReadiness;
+}
+function logRecommendationFallback(error){
+  if(recommendationFallbackWarningShown)return;
+  recommendationFallbackWarningShown=true;
+  if(error)console.warn('Modular recommendation engine unavailable; falling back to legacy recommendation logic.',error);
+  else console.warn('Modular recommendation engine unavailable; falling back to legacy recommendation logic.');
+}
+function getLegacyFallbackRecommendations(){
+  return [{id:'legacy-annual-review',title:'Review your plan annually',summary:'Keep balances, income and spending current.',impact:'Planning opportunity'}];
+}
+function getRecommendationsWithFallback(planCandidate, calculation){
+  try{
+    if(!window.HNRecommendationEngine||typeof window.HNRecommendationEngine.rank!=='function')throw new Error('HNRecommendationEngine.rank is unavailable');
+    const items=window.HNRecommendationEngine.rank(planCandidate,calculation,3);
+    return Array.isArray(items)?items:[];
+  }catch(error){
+    logRecommendationFallback(error);
+    return getLegacyFallbackRecommendations();
+  }
+}
+function setPageState(nextPlan,nextCalculation,nextRecommendations,nextReadiness){
+  const normalizedPlan=window.HNRecommendationState?.normalizePlan?.(nextPlan||plan)||plan;
+  const readiness=nextReadiness||getSharedReadiness(normalizedPlan,nextCalculation);
+  const existingCalculation=pageState&&typeof pageState.calculation==='object'?pageState.calculation:null;
+  let resolvedCalculation=nextCalculation&&typeof nextCalculation==='object'?nextCalculation:existingCalculation;
+  if(!readiness.isComplete){resolvedCalculation=null;}
+  else if(!resolvedCalculation||!(Object.keys(resolvedCalculation).length>0)){
+    try{resolvedCalculation=window.HNVerifiedEngine?.calculate?.(normalizedPlan)||existingCalculation||null;}catch(error){console.warn('Shared page-state calculation could not be resolved from the verified engine.',error)}
+  }
+  pageState={plan:normalizedPlan,calculation:resolvedCalculation,recommendations:Array.isArray(nextRecommendations)?nextRecommendations:[],readiness};
+  window.plan=normalizedPlan;
+  window.result=pageState.calculation;
+  window.recommendations=pageState.recommendations;
+  window.pageState=pageState;
+  return pageState;
+}
 function incomeRow(item,i,owner){const types=['WCB / settlement','Rental income','Side gig / business','Part-time work','Annuity','Disability benefit','Other'];const taxable=item.taxable!==false;return `<div class="income-source-row" data-income-owner="${owner}" data-income-index="${i}"><div class="field"><label>Type</label><select data-income-field="type">${types.map(t=>`<option ${t===item.type?'selected':''}>${t}</option>`).join('')}</select></div><div class="field wide"><label>Name</label><input data-income-field="name" value="${String(item.name||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"></div><div class="field"><label>Annual amount</label><input data-income-field="amount" type="number" min="0" step="100" value="${n(item.amount)}"></div><div class="field"><label>Starts at age</label><input data-income-field="startAge" type="number" min="18" max="100" value="${n(item.startAge)}"></div><div class="field"><label>Ends at age</label><input data-income-field="endAge" type="number" min="18" max="110" value="${n(item.endAge)||110}"></div><div class="field"><label>Tax treatment</label><select data-income-field="taxable"><option value="true" ${taxable?'selected':''}>Taxable</option><option value="false" ${!taxable?'selected':''}>Tax-free</option></select></div><button type="button" class="remove-income" data-remove-income="${owner}:${i}" aria-label="Remove income source">×</button></div>`}
 function renderOtherIncome(){[1,2].forEach(owner=>{const list=$(`otherIncomeList${owner}`);if(list)list.innerHTML=(plan[`otherIncome${owner}`]||[]).map((x,i)=>incomeRow(x,i,owner)).join('')||'<p class="quiet">No additional income sources added.</p>'})}
 function collectOtherIncome(){document.querySelectorAll('.income-source-row').forEach(row=>{const owner=row.dataset.incomeOwner,i=Number(row.dataset.incomeIndex),item=plan[`otherIncome${owner}`][i];row.querySelectorAll('[data-income-field]').forEach(el=>{const field=el.dataset.incomeField;if(field==='taxable')item[field]=el.value==='true';else item[field]=el.type==='number'?Number(el.value):el.value})})}
@@ -90,7 +236,7 @@ function syncIncomeNames(){
 }
 function bind(){Object.entries(plan).forEach(([k,v])=>{const el=$(k);if(el&&!Array.isArray(v))el.value=v});document.querySelectorAll('[data-household]').forEach(x=>x.classList.toggle('selected',x.dataset.household===plan.household));renderOtherIncome();togglePartner();updateSummary();$('resumeBtn').classList.toggle('hidden',!localStorage.getItem(KEY))}
 function save(show=false){collect();localStorage.setItem(KEY,JSON.stringify(plan));$('saveStatus').textContent='Saved locally';if(show)toast('Plan saved') ;window.dispatchEvent(new CustomEvent('hn:plan-saved',{detail:{plan}}))}
-window.HNCloudBridge={getPlan:()=>structuredClone(plan),hasLocalPlan:()=>!!localStorage.getItem(KEY),applyPlan:p=>{plan={...defaults,...p};save();bind();calculateAndRender();return true},createFreshPlan:()=>createFreshPlan(),getUpdatedAt:()=>plan.updatedAt};
+window.HNCloudBridge={getPlan:()=>structuredClone(plan),hasLocalPlan:()=>!!localStorage.getItem(KEY),applyPlan:p=>{plan={...defaults,...p};save();bind();const resolved=hydrateStartupPlan({workingPlan:plan});if(resolved?.applied){finalizeStartupSelection(resolved.result);}else{calculateAndRender();}return true},createFreshPlan:()=>createFreshPlan(),getUpdatedAt:()=>plan.updatedAt};
 function writeRoute(screen,view){
  const route=screen==='explore'&&view?`#explore/${view}`:`#${screen}`;
  if(location.hash!==route)history.replaceState(null,'',route);
@@ -129,18 +275,66 @@ function previewEngine(p){
  return{engine:'preview',series,retirementStart,sustainable,ending:series.at(-1)?.balance||0,ratio,status,confidence,bridgeNet,annualSpend,yearsTo,yearsRet};
 }
 function calculate(){collect();const adapter=window.HNVerifiedEngine;if(adapter&&typeof adapter.calculate==='function'){try{return adapter.calculate(plan)}catch(e){console.error(e)}}return previewEngine(plan)}
-function calculateAndRender(){result=calculate();const first=plan.name1||'You';$('planName').textContent=`${first}’s plan`;$('sustainable').textContent=money(result.sustainable);$('metricRetire').textContent='Age '+plan.retire1;$('metricHorizon').textContent='Age '+plan.horizon;$('metricLegacy').textContent=money(result.ending);$('meter').style.width=result.confidence+'%';$('confidence').textContent=result.confidence>=80?'Strong':result.confidence>=65?'Moderate':'Developing';$('confidenceCopy').textContent=result.confidence>=80?'The plan has meaningful support across savings and stable income.':result.confidence>=65?'The broad plan is workable, but one or two assumptions deserve attention.':'The plan needs an adjustment before it supports the full goal.';
- const pill=$('statusPill');pill.className='status-pill '+(result.status==='close'?'watch':result.status==='attention'?'attention':'');
- if(result.status==='ontrack'){pill.textContent='✓ Your plan is on track';$('answer').textContent=`${first}, your retirement goal appears supportable.`;$('answerSub').textContent=`The verified model supports retirement at ${plan.retire1} through age ${plan.horizon}. Your savings and later stable income do most of the work.`}
- else if(result.status==='close'){pill.textContent='Your plan is close';$('answer').textContent='You are close to the retirement you described.';$('answerSub').textContent='A modest change to timing, spending or savings could bring the plan onto firmer ground.'}
- else{pill.textContent='Your plan needs attention';$('answer').textContent='The current plan does not yet support the full goal.';$('answerSub').textContent='This is not a dead end. Harbour North will focus first on the smallest controllable change.'}
- if(plan.bridgeYears>0&&plan.incomeBridge>0){$('recTitle').textContent='Use the continuing-income years deliberately.';$('recCopy').textContent='Those years can reduce early withdrawals and create room for a planned RRSP strategy before government benefits begin.'}
- else if(result.ratio<1){$('recTitle').textContent='Test a small spending or retirement-age adjustment.';$('recCopy').textContent='A modest adjustment is likely to have more impact than adding complexity elsewhere.'}
- else{$('recTitle').textContent='Review registered withdrawals before CPP and OAS.';$('recCopy').textContent='Planned withdrawals may smooth lifetime tax and preserve flexibility later.'}
- window.HNDashboard?.render(plan,result);
+function getCurrentCalculation(){
+  const readiness=getSharedReadiness(plan,pageState.calculation);
+  if(pageState.calculation&&typeof pageState.calculation==='object'&&readiness.isComplete)return pageState.calculation;
+  if(!readiness.isComplete)return null;
+  const calculation=calculate();
+  setPageState(plan,calculation,pageState.recommendations,readiness);
+  return pageState.calculation;
 }
-function renderEvidence(){if(!result)result=calculate();const s=result.series,max=Math.max(...s.map(x=>x.balance),1),w=600,h=220;const pts=s.map((x,i)=>`${i/(s.length-1||1)*w},${h-x.balance/max*180}`).join(' ');const pointStep=Math.max(1,Math.ceil(s.length/12));const dots=s.map((x,i)=>{if(i%pointStep!==0&&i!==s.length-1)return '';const px=i/(s.length-1||1)*w,py=h-x.balance/max*180;return `<circle cx="${px}" cy="${py}" r="5" fill="#fffdf8" stroke="#2e7f86" stroke-width="3"><title>Age ${x.age}: ${money(x.balance)}</title></circle>`}).join('');const labels=s.length?`<text x="0" y="242" font-size="12" fill="#6c7a7b">Age ${s[0].age}</text><text x="${w}" y="242" text-anchor="end" font-size="12" fill="#6c7a7b">Age ${s.at(-1).age}</text>`:'';$('balanceChart').innerHTML=`<defs><linearGradient id="fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2e7f86" stop-opacity=".28"/><stop offset="1" stop-color="#2e7f86" stop-opacity=".02"/></linearGradient></defs><polygon points="0,${h} ${pts} ${w},${h}" fill="url(#fill)"/><polyline points="${pts}" fill="none" stroke="#2e7f86" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>${dots}<line x1="0" y1="${h}" x2="${w}" y2="${h}" stroke="rgba(16,58,86,.15)"/>${labels}`;
- $('chartMeaning').innerHTML=`<strong>What this means:</strong> The projection starts retirement with about ${money(result.retirementStart)} and finishes with about ${money(result.ending)} in today’s dollars.`;
+function refreshPageState(){
+  const readiness=getSharedReadiness(plan);
+  const calculation=readiness.isComplete?calculate():null;
+  const recommendations=readiness.isComplete?getRecommendationsWithFallback(plan,calculation):[];
+  setPageState(plan,calculation,recommendations,readiness);
+  return pageState;
+}
+function renderSnapshotDashboard(){
+  const calculation=getCurrentCalculation();
+  if(!calculation||!pageState.plan)return;
+  try{window.HNDashboard?.render?.(pageState.plan,calculation,pageState.recommendations);}catch(error){console.error('Retirement snapshot render failed.',error)}
+}
+function calculateAndRender(){
+  refreshPageState();
+  const calculation=getCurrentCalculation();
+  const readiness=pageState.readiness||getSharedReadiness(plan,calculation);
+  const first=plan.name1||'You';
+  $('planName').textContent=`${first}’s plan`;
+  const completeButton=$('completePlanActionBtn');
+  if(completeButton)completeButton.classList.toggle('hidden',readiness.isComplete);
+  if(!readiness.isComplete){
+    $('sustainable').textContent='Not calculated';
+    $('metricRetire').textContent='—';
+    $('metricHorizon').textContent='—';
+    $('metricLegacy').textContent='Not calculated';
+    $('meter').style.width='0%';
+    $('confidence').textContent='Plan incomplete';
+    $('confidenceCopy').textContent='Add your income, savings, retirement age, and spending target to generate results and recommendations.';
+    const pill=$('statusPill');pill.className='status-pill attention';pill.textContent='Complete your plan';
+    $('answer').textContent='Complete your plan to see your retirement outlook.';$('answerSub').textContent='Add your income, savings, retirement age, and spending target to generate results and recommendations.';
+    $('recTitle').textContent='Complete your plan to see opportunities';$('recCopy').textContent='Add your income, savings, retirement age, and spending target to generate results and recommendations.';
+    renderSnapshotDashboard();
+    return;
+  }
+  $('sustainable').textContent=money(calculation?.sustainable);
+  $('metricRetire').textContent='Age '+plan.retire1;
+  $('metricHorizon').textContent='Age '+plan.horizon;
+  $('metricLegacy').textContent=window.HNRecommendationState?.getProjectionDisplayValue?.(readiness, calculation?.ending)||'Not calculated';
+  $('meter').style.width=calculation?.confidence+'%';
+  $('confidence').textContent=calculation?.confidence>=80?'Strong':calculation?.confidence>=65?'Moderate':'Developing';
+  $('confidenceCopy').textContent=calculation?.confidence>=80?'The plan has meaningful support across savings and stable income.':calculation?.confidence>=65?'The broad plan is workable, but one or two assumptions deserve attention.':'The plan needs an adjustment before it supports the full goal.';
+  const pill=$('statusPill');pill.className='status-pill '+(calculation?.status==='close'?'watch':calculation?.status==='attention'?'attention':'');
+  if(calculation?.status==='ontrack'){pill.textContent='✓ Your plan is on track';$('answer').textContent=`${first}, your retirement goal appears supportable.`;$('answerSub').textContent=`The verified model supports retirement at ${plan.retire1} through age ${plan.horizon}. Your savings and later stable income do most of the work.`}
+  else if(calculation?.status==='close'){pill.textContent='Your plan is close';$('answer').textContent='You are close to the retirement you described.';$('answerSub').textContent='A modest change to timing, spending or savings could bring the plan onto firmer ground.'}
+  else{pill.textContent='Your plan needs attention';$('answer').textContent='The current plan does not yet support the full goal.';$('answerSub').textContent='This is not a dead end. Harbour North will focus first on the smallest controllable change.'}
+  if(plan.bridgeYears>0&&plan.incomeBridge>0){$('recTitle').textContent='Use the continuing-income years deliberately.';$('recCopy').textContent='Those years can reduce early withdrawals and create room for a planned RRSP strategy before government benefits begin.'}
+  else if(calculation?.ratio<1){$('recTitle').textContent='Test a small spending or retirement-age adjustment.';$('recCopy').textContent='A modest adjustment is likely to have more impact than adding complexity elsewhere.'}
+  else{$('recTitle').textContent='Review registered withdrawals before CPP and OAS.';$('recCopy').textContent='Planned withdrawals may smooth lifetime tax and preserve flexibility later.'}
+  renderSnapshotDashboard();
+}
+function renderEvidence(){const readiness=getSharedReadiness(plan);if(!readiness.isComplete){$('balanceChart').innerHTML='';$('chartMeaning').innerHTML='<strong>What this means:</strong> Add your income, savings, retirement age, and spending target to generate results.';$('timeline').innerHTML='<div class="quiet">Complete your plan to see the projected timeline.</div>';$('decisionLead').textContent='Complete your plan to see recommendations.';$('decisionBox').innerHTML='<strong>Harbour North recommendation:</strong> Complete your plan to see opportunities.';return;}const calculation=getCurrentCalculation();const s=calculation.series,max=Math.max(...s.map(x=>x.balance),1),w=600,h=220;const pts=s.map((x,i)=>`${i/(s.length-1||1)*w},${h-x.balance/max*180}`).join(' ');const pointStep=Math.max(1,Math.ceil(s.length/12));const dots=s.map((x,i)=>{if(i%pointStep!==0&&i!==s.length-1)return '';const px=i/(s.length-1||1)*w,py=h-x.balance/max*180;return `<circle cx="${px}" cy="${py}" r="5" fill="#fffdf8" stroke="#2e7f86" stroke-width="3"><title>Age ${x.age}: ${money(x.balance)}</title></circle>`}).join('');const labels=s.length?`<text x="0" y="242" font-size="12" fill="#6c7a7b">Age ${s[0].age}</text><text x="${w}" y="242" text-anchor="end" font-size="12" fill="#6c7a7b">Age ${s.at(-1).age}</text>`:'';$('balanceChart').innerHTML=`<defs><linearGradient id="fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2e7f86" stop-opacity=".28"/><stop offset="1" stop-color="#2e7f86" stop-opacity=".02"/></linearGradient></defs><polygon points="0,${h} ${pts} ${w},${h}" fill="url(#fill)"/><polyline points="${pts}" fill="none" stroke="#2e7f86" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>${dots}<line x1="0" y1="${h}" x2="${w}" y2="${h}" stroke="rgba(16,58,86,.15)"/>${labels}`;
+ $('chartMeaning').innerHTML=`<strong>What this means:</strong> The projection starts retirement with about ${money(calculation.retirementStart)} and finishes with about ${money(calculation.ending)} in today’s dollars.`;
  const now=new Date().getFullYear(), retireYear=now+Math.max(0,plan.retire1-plan.age1), stableYear=retireYear+plan.bridgeYears;let events=[[retireYear,`${plan.name1||'You'} retire at ${plan.retire1}`,'Employment income changes and planned withdrawals may begin.']];if(plan.household==='couple')events.push([now+Math.max(0,plan.retire2-plan.age2),`${plan.name2||'Partner'} retires at ${plan.retire2}`,'Household income moves into its long-term retirement pattern.']);events.push([stableYear,'Stable retirement income becomes central','Pension, CPP, OAS and other income reduce portfolio withdrawals.']);$('timeline').innerHTML=events.sort((a,b)=>a[0]-b[0]).map(e=>`<div class="event"><div class="event-year">${e[0]}</div><div class="event-mark"></div><div><strong>${e[1]}</strong><span>${e[2]}</span></div></div>`).join('');
  $('decisionLead').textContent=plan.bridgeYears>0?'How to use the income bridge before both partners are fully retired.':'How to balance spending, timing and registered withdrawals.';$('decisionBox').innerHTML=`<strong>Harbour North recommendation:</strong> ${$('recTitle').textContent}`
 }
@@ -148,17 +342,18 @@ function renderEvidence(){if(!result)result=calculate();const s=result.series,ma
 
 const REVIEW_KEY='hn_foundation_review_v1';
 function reviewSnapshot(){
- if(!result)result=calculate();
- return {date:new Date().toISOString(),plan:{age1:n(plan.age1),age2:n(plan.age2),retire1:n(plan.retire1),retire2:n(plan.retire2),spend:n(plan.spend),rrsp:n(plan.rrsp),tfsa:n(plan.tfsa),nonreg:n(plan.nonreg),returnRate:n(plan.returnRate),inflationRate:n(plan.inflationRate),horizon:n(plan.horizon),household:plan.household},result:{status:result.status,confidence:n(result.confidence),sustainable:n(result.sustainable),ending:n(result.ending)}};
+ const calculation=getCurrentCalculation();
+ return {date:new Date().toISOString(),plan:{age1:n(plan.age1),age2:n(plan.age2),retire1:n(plan.retire1),retire2:n(plan.retire2),spend:n(plan.spend),rrsp:n(plan.rrsp),tfsa:n(plan.tfsa),nonreg:n(plan.nonreg),returnRate:n(plan.returnRate),inflationRate:n(plan.inflationRate),horizon:n(plan.horizon),household:plan.household},result:{status:calculation?.status,confidence:n(calculation?.confidence),sustainable:n(calculation?.sustainable),ending:n(calculation?.ending)}};
 }
 function readReviewSnapshot(){try{return JSON.parse(localStorage.getItem(REVIEW_KEY)||'null')}catch{return null}}
 function dateLabel(value){if(!value)return 'Not reviewed yet';const d=new Date(value);return Number.isNaN(d.getTime())?'Not reviewed yet':d.toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})}
 function changeItem(text,icon='✓'){return `<div class="review-item"><span class="review-icon">${icon}</span><span>${text}</span></div>`}
 function renderPlanReview(){
- result=calculate();const previous=readReviewSnapshot(),current=reviewSnapshot(),first=plan.name1||'Your';
- const pill=$('reviewStatusPill');pill.className='status-pill '+(result.status==='close'?'watch':result.status==='attention'?'attention':'');
- if(result.status==='ontrack'){pill.textContent='✓ Your plan is on track';$('reviewStatusTitle').textContent='Your retirement plan remains supportable.';$('reviewStatusCopy').textContent=`${first}, the information currently entered continues to support your retirement goal.`}
- else if(result.status==='close'){pill.textContent='Your plan is close';$('reviewStatusTitle').textContent='Your plan still has a workable path.';$('reviewStatusCopy').textContent='A modest adjustment would provide a stronger margin and deserves attention.'}
+ const readiness=getSharedReadiness(plan,pageState.calculation);
+ const calculation=getCurrentCalculation();const previous=readReviewSnapshot(),current=reviewSnapshot(),first=plan.name1||'Your';
+ const pill=$('reviewStatusPill');pill.className='status-pill '+(calculation?.status==='close'?'watch':calculation?.status==='attention'?'attention':'');
+ if(calculation?.status==='ontrack'){pill.textContent='✓ Your plan is on track';$('reviewStatusTitle').textContent='Your retirement plan remains supportable.';$('reviewStatusCopy').textContent=`${first}, the information currently entered continues to support your retirement goal.`}
+ else if(calculation?.status==='close'){pill.textContent='Your plan is close';$('reviewStatusTitle').textContent='Your plan still has a workable path.';$('reviewStatusCopy').textContent='A modest adjustment would provide a stronger margin and deserves attention.'}
  else{pill.textContent='Your plan needs attention';$('reviewStatusTitle').textContent='One part of your plan should be adjusted.';$('reviewStatusCopy').textContent='The current goal is not fully supported yet, but the next useful action is clear.'}
  $('reviewLastDate').textContent=dateLabel(previous?.date);$('reviewCurrentDate').textContent=dateLabel(current.date);
  const changes=[];
@@ -168,15 +363,16 @@ function renderPlanReview(){
   if(Math.abs(sd)>=100)changes.push(changeItem(`Your investment balances ${sd>=0?'increased':'decreased'} by <strong>${money(Math.abs(sd))}</strong>.`,sd>=0?'↑':'↓'));
   if(n(plan.retire1)!==n(pp.retire1))changes.push(changeItem(`Your planned retirement age changed from <strong>${n(pp.retire1)}</strong> to <strong>${n(plan.retire1)}</strong>.`,'↔'));
   if(n(plan.spend)!==n(pp.spend))changes.push(changeItem(`Your monthly spending goal changed from <strong>${money(pp.spend)}</strong> to <strong>${money(plan.spend)}</strong>.`,'↔'));
-  if(n(result.sustainable)!==n(pr.sustainable)){const d=n(result.sustainable)-n(pr.sustainable);changes.push(changeItem(`Estimated sustainable spending ${d>=0?'improved':'decreased'} by <strong>${money(Math.abs(d))}/month</strong>.`,d>=0?'↑':'↓'))}
+  if(n(calculation?.sustainable)!==n(pr.sustainable)){const d=n(calculation?.sustainable)-n(pr.sustainable);changes.push(changeItem(`Estimated sustainable spending ${d>=0?'improved':'decreased'} by <strong>${money(Math.abs(d))}/month</strong>.`,d>=0?'↑':'↓'))}
   if(n(plan.returnRate)!==n(pp.returnRate)||n(plan.inflationRate)!==n(pp.inflationRate))changes.push(changeItem('One or more planning assumptions changed.','↔'));
   if(!changes.length)changes.push(changeItem('No meaningful changes were found since your last review.'));
  }
  $('reviewChanges').innerHTML=changes.slice(0,4).join('');
  const action=recommendationData()[0]||{title:'Continue your current plan',copy:'No urgent adjustment is required.'};$('reviewActionTitle').textContent=action.title;$('reviewActionCopy').textContent=action.copy;
- const reasons=[];reasons.push(changeItem(result.ratio>=1?'Your spending target remains supported by the current projection.':'Your spending target currently exceeds the modelled sustainable amount.',result.ratio>=1?'✓':'!'));reasons.push(changeItem(result.ending>=0?'The projection remains funded through the planning horizon.':'The projection runs short before the planning horizon.',result.ending>=0?'✓':'!'));reasons.push(changeItem('Your assumptions and entered income sources are included in the year-by-year calculation.'));
+ const reasons=[];if(!readiness.isComplete){reasons.push(changeItem('Your plan is not ready for a projection yet. Add your retirement age, spending target, and savings or income information.', '!'));reasons.push(changeItem('Calculations will appear here once the plan is complete.', '!'));reasons.push(changeItem('The same readiness check is used for the overview, recommendations, and plan-health areas.'));
+ }else{reasons.push(changeItem(calculation?.ratio>=1?'Your spending target remains supported by the current projection.':'Your spending target currently exceeds the modelled sustainable amount.',calculation?.ratio>=1?'✓':'!'));reasons.push(changeItem(calculation?.ending>=0?'The projection remains funded through the planning horizon.':'The projection runs short before the planning horizon.',calculation?.ending>=0?'✓':'!'));reasons.push(changeItem('Your assumptions and entered income sources are included in the year-by-year calculation.'))}
  $('reviewReasons').innerHTML=reasons.join('');
- $('reviewRetireAge').textContent='Age '+n(plan.retire1);$('reviewSpend').textContent=money(plan.spend)+'/mo';$('reviewSustainable').textContent=money(result.sustainable)+'/mo';$('reviewEnding').textContent=money(result.ending);$('reviewReturn').textContent=n(plan.returnRate)+'%';$('reviewInflation').textContent=n(plan.inflationRate)+'%';
+ $('reviewRetireAge').textContent='Age '+n(plan.retire1);$('reviewSpend').textContent=money(plan.spend)+'/mo';$('reviewSustainable').textContent=readiness.isComplete?money(calculation?.sustainable)+'/mo':'Not calculated';$('reviewEnding').textContent=readiness.isComplete?money(calculation?.ending):'Not calculated';$('reviewReturn').textContent=n(plan.returnRate)+'%';$('reviewInflation').textContent=n(plan.inflationRate)+'%';
 }
 
 function showExploreView(name,skipRoute=false){
@@ -192,13 +388,54 @@ function showExploreView(name,skipRoute=false){
  if(!skipRoute&&$('explore').classList.contains('active'))writeRoute('explore',name);
 }
 function recommendationData(){
- if(window.HNRecommendations)return window.HNRecommendations.getRecommendations().map(x=>({title:x.title,copy:x.summary,impact:x.impact}));
- if(!result)result=calculate();
- return [{title:'Review your plan annually',copy:'Keep balances, income and spending current.',impact:'Planning opportunity'}];
+ const readiness=getSharedReadiness(plan,pageState.calculation);
+ if(!readiness.isComplete)return [];
+ const calculation=getCurrentCalculation();
+ const items=Array.isArray(pageState.recommendations)&&pageState.recommendations.length?pageState.recommendations:getRecommendationsWithFallback(plan,calculation);
+ return (items||[]).map(x=>({title:x.title,copy:x.summary,impact:x.impact}));
+}
+function renderRecommendationSummary(items){
+ const list=$('recommendationList');
+ const summary=document.getElementById('opportunitySummary')||(()=>{const node=document.createElement('section');node.id='opportunitySummary';node.className='opportunity-summary';list?.parentNode?.insertBefore(node,list);return node;})();
+ if(!list||!summary)return;
+ const planData={...(plan||{}),spend:Math.max(0,n(plan?.spend))};
+ const target=Number(planData.spend)||0;
+ const targetDisplay=target>0?`${money(target)}/mo`:'—';
+ const readiness=getSharedReadiness(plan,pageState.calculation);
+ const hasRecommendations=Array.isArray(items)&&items.length>0;
+ const header=window.HNRecommendationState?.getRecommendationHeading?.(pageState.calculation?.status||'attention',items)||'No significant planning opportunities were identified';
+ const summaryCopy=window.HNRecommendationState?.getRecommendationEmptyState?.(pageState.calculation?.status||'attention',items)||'No significant planning opportunities were identified.';
+ const first=hasRecommendations?items[0]:null;
+ const state=pageState.calculation?.ratio>=1.12?'strong':pageState.calculation?.ratio>=1?'good':pageState.calculation?.ratio>=.9?'watch':'attention';
+ const label=readiness.isComplete?(state==='strong'?'Your retirement plan is in strong shape.':state==='good'?'Your retirement plan is on track.':state==='watch'?'Your plan is close to the target.':'Your plan would benefit from an adjustment.'):'Complete your plan to see opportunities.';
+ const body=readiness.isComplete?(hasRecommendations?`${escapeHtml(summaryCopy)}${first?` The highest-priority opportunity is <strong>${escapeHtml(first.title.toLowerCase())}</strong>.`:''}`:`${escapeHtml(summaryCopy)}`):`${escapeHtml(readiness.message||'Add your income, savings, retirement age, and spending target to generate results and recommendations.')}`;
+ summary.innerHTML=`<div class="opportunity-summary-status ${readiness.isComplete?state:'attention'}"><span aria-hidden="true">${readiness.isComplete? (state==='attention'?'!':'✓'):'!'}</span>${label}</div><div class="opportunity-summary-grid"><div><div class="eyebrow">Your retirement guide</div><h3>${escapeHtml(planData.name1||planData.accountFirstName||'Your')}, ${readiness.isComplete?header:'Complete your plan to see opportunities'}</h3><p>${body}</p></div><div class="opportunity-summary-metrics"><div><span>Sustainable spending</span><strong>${readiness.isComplete?money(pageState.calculation?.sustainable):'Not calculated'}/mo</strong></div><div><span>Target spending</span><strong>${targetDisplay}</strong></div><div><span>Last reviewed</span><strong>Today</strong></div></div></div>`;
+}
+function renderLegacyRecommendationCards(items,readiness){
+ const list=$('recommendationList');
+ if(!list)return;
+ list.className='recommendation-list';
+ if(!readiness.isComplete){
+  list.innerHTML='<section class="card next-step-empty"><h3>Complete your plan to see opportunities</h3><p class="quiet">Add your income, savings, retirement age, and spending target to generate results and recommendations.</p></section>';
+  return;
+ }
+ if(!Array.isArray(items)||!items.length){
+  list.innerHTML='<section class="card next-step-empty"><h3>No significant planning opportunities were identified</h3><p class="quiet">No significant planning opportunities were identified.</p></section>';
+  return;
+ }
+ list.innerHTML=items.map((item,index)=>`<article class="recommendation-card"><div class="rec-number">${index+1}</div><div><h3>${escapeHtml(item.title||'Planning opportunity')}</h3><p class="quiet">${escapeHtml(item.summary||'Review this opportunity in your plan.')}</p></div><div class="rec-impact ${item.impact==='Moderate impact'?'medium':''}">${escapeHtml(item.impact||'Planning opportunity')}</div></article>`).join('');
 }
 function renderRecommendations(){
- if(window.HNRecommendations)return window.HNRecommendations.render();
- $('recommendationList').innerHTML='';
+ const readiness=getSharedReadiness(plan,pageState.calculation);
+ const calculation=readiness.isComplete?getCurrentCalculation():null;
+ const items=readiness.isComplete?getRecommendationsWithFallback(plan,calculation):[];
+ pageState.recommendations=items;
+ setPageState(plan,calculation,items,readiness);
+ if(window.HNRecommendations&&typeof window.HNRecommendations.render==='function'){
+  try{window.HNRecommendations.render();return;}catch(error){logRecommendationFallback(error)}
+ }
+ renderRecommendationSummary(items);
+ renderLegacyRecommendationCards(items,readiness);
 }
 function scenarioPlan(){const retire1=Number($('scenarioAge').value),delta=retire1-n(plan.retire1),horizon=Number($('scenarioHorizon').value);const retire2=plan.household==='couple'?Math.max(n(plan.age2),Math.min(horizon-1,n(plan.retire2)+delta)):n(plan.retire2);return {...plan,retire1,retire2,spend:Number($('scenarioSpend').value),returnRate:Number($('scenarioReturn').value),inflationRate:Number($('scenarioInflation').value),province:$('scenarioProvince').value,horizon}}
 const scenarioCache=new Map();
@@ -245,7 +482,7 @@ function applyScenarioControls(p){
  $('scenarioAge').value=String(p.retire1);$('scenarioSpend').value=String(p.spend);$('scenarioReturn').value=String(n(p.returnRate)||5);$('scenarioInflation').value=String(n(p.inflationRate)||2);$('scenarioProvince').value=p.province||'British Columbia';$('scenarioHorizon').value=String(n(p.horizon)||95);
 }
 function renderScenario(){
- result=calculate();
+ const calculation=getCurrentCalculation();
  const ageControl=$('scenarioAge'),spendControl=$('scenarioSpend');
  ageControl.min=String(Math.max(40,n(plan.age1)||40));
  ageControl.max=String(Math.max(Number(ageControl.min)+1,n(plan.horizon)-1||75));
@@ -264,10 +501,10 @@ function updateScenario(){
  $('scenarioDelta').textContent='Calculating this alternative with the verified engine…';$('adoptScenarioBtn').disabled=true;
  clearTimeout(scenarioTimer);scenarioTimer=setTimeout(()=>{
   try{
-   if(!result)result=calculate();
+   const calculation=getCurrentCalculation();
    const alt=calculateScenario(altPlan);if(run!==scenarioRun)return;
-   $('baseSustainable').textContent=money(result.sustainable)+'/mo';$('altSustainable').textContent=money(alt.sustainable)+'/mo';$('baseEnding').textContent=money(result.ending);$('altEnding').textContent=money(alt.ending);
-   const d=alt.sustainable-result.sustainable,ageDelta=altPlan.retire1-plan.retire1,spendDelta=altPlan.spend-plan.spend,works=scenarioWorks(alt,altPlan);
+   $('baseSustainable').textContent=money(calculation.sustainable)+'/mo';$('altSustainable').textContent=money(alt.sustainable)+'/mo';$('baseEnding').textContent=money(calculation.ending);$('altEnding').textContent=money(alt.ending);
+   const d=alt.sustainable-calculation.sustainable,ageDelta=altPlan.retire1-plan.retire1,spendDelta=altPlan.spend-plan.spend,works=scenarioWorks(alt,altPlan);
    let text=works?'This alternative supports the spending target through the planning horizon.':`This alternative still has a funding gap. Estimated sustainable spending is ${money(alt.sustainable)} per month.`;
    if(Math.abs(d)>=50)text+=` Sustainable spending changes by ${d>=0?'+':''}${money(d)} per month.`;
    if(ageDelta)text+=` Retirement begins ${Math.abs(ageDelta)} year${Math.abs(ageDelta)===1?'':'s'} ${ageDelta>0?'later':'earlier'}.`;
@@ -291,7 +528,8 @@ $('newPlanBtn').addEventListener('click',()=>{
  localStorage.removeItem(KEY);
  localStorage.removeItem(REVIEW_KEY);
  plan=createFreshPlan();
- result=null;
+ pageState={plan,calculation:null,recommendations:[]};
+ window.result=null;
  bind();
  save();
  go('createAccount');
@@ -331,9 +569,10 @@ $('importBtn').addEventListener('click',async()=>{
   localStorage.setItem(KEY,JSON.stringify(plan));
   const stored=JSON.parse(localStorage.getItem(KEY)||'null');
   if(!stored||Number(stored.age1)!==Number(plan.age1)||Number(stored.spend)!==Number(plan.spend))throw new Error('Imported plan could not be verified in local storage');
-  result=null;
+  pageState={plan,calculation:null,recommendations:[]};
+  window.result=null;
   bind();
-  result=calculate();
+  refreshPageState();
   calculateAndRender();
   $('saveStatus').textContent='Imported and saved locally';
   status.textContent=`Imported ${f.name}: ${plan.name1||'Plan'}, age ${plan.age1}, ${money(plan.spend)}/month target.`;
@@ -350,7 +589,7 @@ $('importBtn').addEventListener('click',async()=>{
 
 ['scenarioAge','scenarioSpend','scenarioReturn','scenarioInflation','scenarioHorizon'].forEach(id=>$(id).addEventListener('input',updateScenario));$('scenarioProvince').addEventListener('change',updateScenario);
 $('resetScenarioBtn').addEventListener('click',()=>{renderScenario();toast('Workable scenario refreshed')});
-$('adoptScenarioBtn').addEventListener('click',()=>{const alt=normalizedScenarioPlan(scenarioPlan()),check=calculateScenario(alt);if(!scenarioWorks(check,alt))return toast('Adjust the alternative until it is workable');plan.retire1=alt.retire1;plan.retire2=alt.retire2;plan.spend=alt.spend;plan.returnRate=alt.returnRate;plan.inflationRate=alt.inflationRate;plan.province=alt.province;plan.horizon=alt.horizon;bind();save();result=calculate();calculateAndRender();toast('Alternative adopted');setTimeout(()=>go('brief'),350)});
+$('adoptScenarioBtn').addEventListener('click',()=>{const alt=normalizedScenarioPlan(scenarioPlan()),check=calculateScenario(alt);if(!scenarioWorks(check,alt))return toast('Adjust the alternative until it is workable');plan.retire1=alt.retire1;plan.retire2=alt.retire2;plan.spend=alt.spend;plan.returnRate=alt.returnRate;plan.inflationRate=alt.inflationRate;plan.province=alt.province;plan.horizon=alt.horizon;bind();save();refreshPageState();calculateAndRender();toast('Alternative adopted');setTimeout(()=>go('brief'),350)});
 $('completeReviewBtn').addEventListener('click',()=>{localStorage.setItem(REVIEW_KEY,JSON.stringify(reviewSnapshot()));renderPlanReview();toast('Plan review completed')});
 
 $('developerModeBtn').addEventListener('click',()=>{const enabled=!developerEnabled();localStorage.setItem(DEV_KEY,String(enabled));syncDeveloperMode();toast(enabled?'Developer Mode enabled':'Developer Mode disabled')});
@@ -359,19 +598,15 @@ $('runValidationBtn').addEventListener('click',()=>runValidation(true));
 $('exportValidationBtn').addEventListener('click',exportValidationReport);
 $('yearInspectorSelect').addEventListener('change',e=>renderYearInspector(Number(e.target.value)));
 document.addEventListener('click',e=>{const row=e.target.closest('[data-year-index]');if(row)renderYearInspector(Number(row.dataset.yearIndex))});
-$('resetBtn').addEventListener('click',()=>{if(confirm('Delete this local alpha plan?')){localStorage.removeItem(KEY);localStorage.removeItem(REVIEW_KEY);plan=createFreshPlan();result=null;bind();go('welcome');toast('Local plan deleted')}});
+$('resetBtn').addEventListener('click',()=>{if(confirm('Delete this local alpha plan?')){localStorage.removeItem(KEY);localStorage.removeItem(REVIEW_KEY);plan=createFreshPlan();pageState={plan,calculation:null,recommendations:[]};window.result=null;bind();go('welcome');toast('Local plan deleted')}});
 window.addEventListener('hashchange',()=>{const route=readRoute();go(route.screen,{view:route.view,skipRoute:true})});
 bind();
 syncDeveloperMode();
+window.addEventListener('load',()=>{renderSnapshotDashboard();hydrateStartupPlan({workingPlan:plan,activePlanId:localStorage.getItem(ACTIVE_PLAN_STORAGE_KEY),selectedPlan:loadStoredPlan()||null,mostRecentSavedPlan:loadStoredPlan()||null});});
 {const route=readRoute();go(route.screen,{view:route.view,skipRoute:true});}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/auth/auth.js"></script>
-<script src="js/recommendations/recommendation-tests.js"></script>
-<script src="js/recommendations/recommendation-scorer.js"></script>
-<script src="js/recommendations/recommendation-ranking.js"></script>
-<script src="js/recommendations/recommendation-engine.js"></script>
 <script src="js/dashboard/dashboard.js"></script>
-<script src="js/recommendations/recommendation-ui.js"></script>
 <script src="js/plans/plans.js"></script>
 </body></html>

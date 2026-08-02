@@ -70,4 +70,4 @@ function runSelfTests(){
   return {ok:results.every(r=>r.ok),total:results.reduce((s,r)=>s+r.total,0),failed:results.flatMap(r=>r.failed)};
 }
 global.HNVerifiedEngine={calculate,runSelfTests,legacyPlan};
-})(window);
+})(typeof window!=='undefined'?window:globalThis);

@@ -6,18 +6,34 @@
   const money=value=>new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:0}).format(num(value));
   const badgeClass=value=>value==='High impact'?'high':value==='Moderate impact'?'moderate':'planning';
 
+  function normalizePlan(plan={}){
+    return window.HNRecommendationState?.normalizePlan?.(plan)||{
+      ...(plan&&typeof plan==='object'?plan:{}),
+      spend:num(plan?.spend)
+    };
+  }
+
+  function getPlanContext(){
+    const state=window.pageState&&typeof window.pageState==='object'?window.pageState:{};
+    const plan=normalizePlan(state.plan||window.plan||{});
+    const result=window.HNRecommendationState?.resolveCalculation?.(state, window.result)||null;
+    return {plan,result};
+  }
+
   function getRecommendations(){
+    if(Array.isArray(window.pageState?.recommendations))return window.pageState.recommendations;
     if(!window.HNRecommendationEngine)return [];
-    if(!window.result&&typeof window.calculate==='function')window.result=window.calculate();
-    return window.HNRecommendationEngine.rank(window.plan||{},window.result||{},3);
+    const {plan,result}=getPlanContext();
+    const ranked=window.HNRecommendationEngine.rank(plan,result,3)||[];
+    window.pageState={...(window.pageState||{}), plan, calculation:result, recommendations:ranked};
+    return ranked;
   }
 
   function planState(){
-    const plan=window.plan||{};
-    const result=window.result||{};
-    const ratio=num(result.ratio);
+    const {plan,result}=getPlanContext();
+    const ratio=num(result?.ratio);
     const target=num(plan.spend);
-    const sustainable=num(result.sustainable);
+    const sustainable=num(result?.sustainable);
     if(ratio>=1.12)return {tone:'strong',label:'Your retirement plan is in strong shape.',copy:`The current projection supports your ${money(target)} monthly spending target with additional planning flexibility.`};
     if(ratio>=1)return {tone:'good',label:'Your retirement plan is on track.',copy:`The current projection supports your ${money(target)} monthly spending target based on the assumptions entered.`};
     if(ratio>=.9)return {tone:'watch',label:'Your plan is close to the target.',copy:`The current projection supports about ${money(sustainable)} per month. A focused adjustment may close the remaining gap.`};
@@ -38,25 +54,33 @@
     return summary;
   }
 
-  function renderSummary(items){
+  function renderSummary(items, readinessOverride){
     const summary=ensureSummary();
     if(!summary)return;
+    const readiness=readinessOverride||window.pageState?.readiness||window.HNRecommendationState?.getPlanReadiness?.(window.pageState?.plan||window.plan||{}, window.pageState?.calculation||window.result);
     const state=planState();
-    const plan=window.plan||{};
-    const result=window.result||{};
+    const {plan,result}=getPlanContext();
     const first=items[0];
     const name=escapeHtml(plan.name1||plan.accountFirstName||'Your');
+    const hasRecommendations=items.length>0;
+    const target=num(plan.spend);
+    const targetDisplay=target>0?`${money(target)}/mo`:'—';
+    const header=window.HNRecommendationState?.getRecommendationHeading?.(result?.status||'attention',items)||'No meaningful planning changes identified';
+    const summaryCopy=window.HNRecommendationState?.getRecommendationEmptyState?.(result?.status||'attention',items)||'';
+    const body=readiness?.isComplete?(hasRecommendations?`${escapeHtml(summaryCopy)}${first?` The highest-priority opportunity is <strong>${escapeHtml(first.title.toLowerCase())}</strong>.`:''}`:`${escapeHtml(summaryCopy)}`):`${escapeHtml(readiness?.message||'Add your income, savings, retirement age, and spending target to generate results and recommendations.')}`;
+    const tone=readiness?.isComplete?state.tone:'attention';
+    const label=readiness?.isComplete?state.label:'Complete your plan to see opportunities.';
     summary.innerHTML=`
-      <div class="opportunity-summary-status ${state.tone}"><span aria-hidden="true">${state.tone==='attention'?'!':'✓'}</span>${escapeHtml(state.label)}</div>
+      <div class="opportunity-summary-status ${tone}"><span aria-hidden="true">${tone==='attention'?'!':'✓'}</span>${escapeHtml(label)}</div>
       <div class="opportunity-summary-grid">
         <div>
           <div class="eyebrow">Your retirement guide</div>
-          <h3>${name}, here are the three opportunities worth reviewing next.</h3>
-          <p>${escapeHtml(state.copy)}${first?` The highest-priority opportunity is <strong>${escapeHtml(first.title.toLowerCase())}</strong>.`:''}</p>
+          <h3>${name}, ${readiness?.isComplete?header:'Complete your plan to see opportunities'}</h3>
+          <p>${body}</p>
         </div>
         <div class="opportunity-summary-metrics">
-          <div><span>Sustainable spending</span><strong>${money(result.sustainable)}/mo</strong></div>
-          <div><span>Target spending</span><strong>${money(plan.spend)}/mo</strong></div>
+          <div><span>Sustainable spending</span><strong>${readiness?.isComplete?money(result?.sustainable):'Not calculated'}/mo</strong></div>
+          <div><span>Target spending</span><strong>${targetDisplay}</strong></div>
           <div><span>Last reviewed</span><strong>Today</strong></div>
         </div>
       </div>`;
@@ -171,10 +195,13 @@
     const list=document.getElementById('recommendationList');
     if(!list)return;
     list.className='next-steps-list';
-    const items=getRecommendations();
-    renderSummary(items);
+    const readiness=window.pageState?.readiness||window.HNRecommendationState?.getPlanReadiness?.(window.pageState?.plan||window.plan||{}, window.pageState?.calculation||window.result);
+    const items=readiness?.isComplete?getRecommendations():[];
+    renderSummary(items, readiness);
     if(!items.length){
-      list.innerHTML='<section class="card next-step-empty"><h3>Your plan looks well positioned.</h3><p class="quiet">There are no significant planning changes to prioritize right now. Review the plan annually or after a meaningful change.</p></section>';
+      const heading=readiness?.isComplete?(window.HNRecommendationState?.getRecommendationHeading?.(window.pageState?.calculation?.status||'attention',items)||'No significant planning opportunities were identified'):'Complete your plan to see opportunities';
+      const emptyState=readiness?.isComplete?(window.HNRecommendationState?.getRecommendationEmptyState?.(window.pageState?.calculation?.status||'attention',items)||'No significant planning opportunities were identified.'):'Add your income, savings, retirement age, and spending target to generate results and recommendations.';
+      list.innerHTML=`<section class="card next-step-empty"><h3>${escapeHtml(heading)}</h3><p class="quiet">${escapeHtml(emptyState)}</p></section>`;
       return;
     }
     const focus=(()=>{try{return sessionStorage.getItem('hn.focusOpportunity')||''}catch(_){return ''}})();

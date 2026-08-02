@@ -1,11 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import '../app/js/verified-engine.js';
+import '../app/js/engine-adapter.js';
 import scenarioEvaluation from '../app/js/scenario-evaluation.js';
 import recommendationTests from '../app/js/recommendations/recommendation-tests.js';
-import { scoreCandidates } from '../app/js/recommendations/recommendation-scorer.js';
-import { rankCandidates } from '../app/js/recommendations/recommendation-ranking.js';
+import recommendationScorer from '../app/js/recommendations/recommendation-scorer.js';
+import recommendationRanking from '../app/js/recommendations/recommendation-ranking.js';
 
 const { createScenarioEvaluation, createRetirementAgeSweep } = scenarioEvaluation;
+const { evaluateCandidateResult, scoreCandidates } = recommendationScorer;
+const { rankCandidates } = recommendationRanking;
 
 test('createScenarioEvaluation clones and compares a single change', () => {
   const basePlan = {
@@ -102,6 +106,129 @@ test('cpp optimization sweep creates scoped candidates and preserves the base pl
   assert.equal(basePlan.cppStart1, 65);
   assert.ok(sweep.every(item => item.planBefore.cppStart1 === 65));
   assert.ok(sweep.every(item => Object.keys(item.modifiedInputs).every(key => key === 'cppStart1')));
+});
+
+test('oas optimization sweep generates ages 65 through 70 for valid plans and preserves the base plan', () => {
+  const basePlan = {
+    spend: 4000,
+    retire1: 65,
+    age1: 55,
+    rrsp1: 100000,
+    tfsa1: 20000,
+    nonreg1: 5000,
+    household: 'single',
+    oas1: 8500,
+    oasStart1: 64,
+    returnRate: 5,
+    inflationRate: 2,
+    horizon: 95
+  };
+
+  let calls = 0;
+  const engine = plan => {
+    calls += 1;
+    return {
+      sustainable: Number(plan.spend) + Number(plan.oasStart1) * 10,
+      ending: Number(plan.rrsp1) + Number(plan.tfsa1) + Number(plan.nonreg1),
+      ratio: 1.05,
+      confidence: 80,
+      rows: [{ projection: { tax: 1100 } }]
+    };
+  };
+
+  const sweep = recommendationTests.buildOasOptimizationSweep(basePlan, engine);
+  assert.equal(sweep.length, 6);
+  assert.equal(basePlan.oasStart1, 64);
+  assert.ok(sweep.every(item => item.planBefore.oasStart1 === 64));
+  assert.ok(sweep.every(item => Object.keys(item.modifiedInputs).every(key => key === 'oasStart1')));
+  assert.equal(calls, 7);
+});
+
+test('oas optimization skips plans without OAS benefit information and handles couples correctly', () => {
+  const singlePlan = { spend: 4000, retire1: 65, age1: 55, rrsp1: 100000, tfsa1: 20000, nonreg1: 5000, household: 'single', oasStart1: 65, returnRate: 5, inflationRate: 2, horizon: 95 };
+  const couplePlan = { spend: 4000, retire1: 65, age1: 55, rrsp1: 100000, tfsa1: 20000, nonreg1: 5000, household: 'couple', oas1: 8500, oasStart1: 65, oas2: 9000, oasStart2: 65, returnRate: 5, inflationRate: 2, horizon: 95 };
+
+  assert.equal(recommendationTests.buildOasOptimizationSweep(singlePlan, () => ({ sustainable: 5000, ending: 500000, ratio: 1.0, confidence: 80, rows: [{ projection: { tax: 1100 } }] })).length, 0);
+  assert.equal(recommendationTests.buildOasOptimizationSweep(couplePlan, () => ({ sustainable: 5000, ending: 500000, ratio: 1.0, confidence: 80, rows: [{ projection: { tax: 1100 } }] })).length, 6);
+});
+
+test('scorer output includes delta and explanation fields for OAS candidates', () => {
+  const baseline = { sustainable: 5000, ending: 500000, ratio: 1.0, confidence: 78, rows: [{ projection: { tax: 1100 } }] };
+  const item = {
+    id: 'oas-at-66',
+    title: 'OAS starts at age 66',
+    description: 'Test',
+    modifiedInputs: { oasStart1: 66 },
+    monthlyIncome: 5100,
+    endingAssets: 505000,
+    confidence: 80,
+    taxes: 1000,
+    success: true,
+    guaranteedIncomeTimingDelta: -1,
+    availableMetrics: { income: true, ending: true, confidence: true, taxes: true, guaranteedIncomeTiming: true },
+    planBefore: { oasStart1: 65, oas1: 8500 },
+    planAfter: { oasStart1: 66, oas1: 8500 }
+  };
+
+  const result = evaluateCandidateResult(item, { spend: 4000, oasStart1: 65, oas1: 8500 }, baseline);
+  assert.equal(result.guaranteedIncomeTimingDelta, 1);
+  assert.ok(Array.isArray(result.improvements));
+  assert.ok(Array.isArray(result.disadvantages));
+  assert.ok(Array.isArray(result.unavailableMetrics));
+  assert.ok(result.reasons.some(reason => reason.includes('Guaranteed income')) || result.unavailableMetrics.length > 0);
+});
+
+test('ranking excludes neutral and harmful OAS candidates while preserving the public API', () => {
+  const good = {
+    id: 'oas-at-66',
+    title: 'OAS starts at age 66',
+    description: 'Test',
+    modifiedInputs: { oasStart1: 66 },
+    monthlyIncome: 5100,
+    endingAssets: 505000,
+    confidence: 80,
+    taxes: 1000,
+    success: true,
+    score: 64,
+    guaranteedIncomeTimingDelta: -1,
+    availableMetrics: { income: true, ending: true, confidence: true, taxes: true, guaranteedIncomeTiming: true },
+    incomeDelta: 100,
+    endingAssetsDelta: 5000,
+    confidenceDelta: 2,
+    taxDelta: 100,
+    reasons: ['Improved income'],
+    improvements: ['Improved income'],
+    disadvantages: [],
+    unavailableMetrics: []
+  };
+  const bad = {
+    id: 'oas-at-67',
+    title: 'OAS starts at age 67',
+    description: 'Test',
+    modifiedInputs: { oasStart1: 67 },
+    monthlyIncome: 4800,
+    endingAssets: 490000,
+    confidence: 72,
+    taxes: 1200,
+    success: true,
+    score: 40,
+    guaranteedIncomeTimingDelta: -2,
+    availableMetrics: { income: true, ending: true, confidence: true, taxes: true, guaranteedIncomeTiming: true },
+    incomeDelta: -200,
+    endingAssetsDelta: -10000,
+    confidenceDelta: -6,
+    taxDelta: -100,
+    reasons: ['Worse income'],
+    improvements: [],
+    disadvantages: ['Worse income'],
+    unavailableMetrics: []
+  };
+
+  const ranked = rankCandidates([good, bad], 3, {});
+  assert.equal(ranked.length, 1);
+  assert.equal(ranked[0].id, 'oas-at-66');
+  assert.equal(typeof recommendationTests.buildCandidates, 'function');
+  assert.equal(typeof recommendationTests.buildOasOptimizationSweep, 'function');
 });
 
 test('invalid retirement ages are excluded and sweep results remain scorer/ranking compatible', () => {

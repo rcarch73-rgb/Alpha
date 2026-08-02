@@ -34,9 +34,9 @@
       scenario,
       deltas:{sustainable:sustainableDelta,ending:endingDelta,ratio:ratioDelta},
       summary:[
-        sustainableDelta>=0?`+${sustainableDelta.toFixed(2)}`:sustainableDelta.toFixed(2),
-        endingDelta>=0?`+${endingDelta.toFixed(2)}`:endingDelta.toFixed(2),
-        ratioDelta>=0?`+${ratioDelta.toFixed(2)}`:ratioDelta.toFixed(2)
+        sustainableDelta.toFixed(2),
+        endingDelta.toFixed(2),
+        ratioDelta.toFixed(2)
       ].join(' | ')
     };
   }

@@ -13,46 +13,54 @@
     return `${day}${name?`, ${name}`:''}`;
   }
   function health(label,value,tone='good'){return `<div class="overview-health-row"><span>${escape(label)}</span><strong class="${tone}">${escape(value)}</strong></div>`}
-  function render(plan,result){
-    if(!plan||!result)return;
-    const first=plan.name1||plan.accountFirstName||'';
-    const ratio=num(result.ratio);
-    const status=result.status|| (ratio>=1?'ontrack':ratio>=.9?'close':'attention');
+  function render(plan,result,recommendations,readinessOverride){
+    if(!plan)return;
+    const normalizedPlan=window.HNRecommendationState?.normalizePlan?.(plan)||plan;
+    const readiness=readinessOverride||window.pageState?.readiness||window.HNRecommendationState?.getPlanReadiness?.(normalizedPlan, result);
+    const calculation=readiness?.isComplete ? (window.HNRecommendationState?.resolveCalculation?.(window.pageState,result)||null) : null;
+    const resolvedRecommendations=readiness?.isComplete ? (Array.isArray(recommendations)&&recommendations.length?recommendations:(Array.isArray(window.pageState?.recommendations)?window.pageState.recommendations:[])) : [];
+    const metricMap=window.HNRecommendationState?.getDashboardMetricMap?.(calculation)||{};
+    const first=normalizedPlan.name1||normalizedPlan.accountFirstName||'';
+    const ratio=num(calculation?.ratio);
+    const status=calculation?.status|| (ratio>=1?'ontrack':ratio>=.9?'close':'attention');
     const greetingEl=el('dashboardGreeting'); if(greetingEl)greetingEl.textContent=greeting(first);
-    const target=el('dashboardTarget'); if(target)target.textContent=`Your target: ${money(plan.spend)}/month`;
-    const retirementPortfolio=el('dashboardRetirementPortfolio'); if(retirementPortfolio)retirementPortfolio.textContent=money(result.retirementStart);
-    const retireStatus=el('dashboardRetireStatus'); if(retireStatus)retireStatus.textContent=status==='ontrack'?'Supported by the current projection':status==='close'?'Close to the current target':'An adjustment is worth reviewing';
+    const target=el('dashboardTarget'); if(target)target.textContent=`Your target: ${money(normalizedPlan.spend)}/month`;
+    const retirementPortfolio=el('dashboardRetirementPortfolio'); if(retirementPortfolio)retirementPortfolio.textContent=readiness?.isComplete? (window.HNRecommendationState?.formatMetricValue?.(calculation?.retirementStart) || 'Unavailable') : 'Not calculated';
+    const retireStatus=el('dashboardRetireStatus'); if(retireStatus)retireStatus.textContent=readiness?.isComplete?(status==='ontrack'?'Supported by the current projection':status==='close'?'Close to the current target':'An adjustment is worth reviewing'):'Complete your plan to unlock the projection';
 
-    const confidenceTone=num(result.confidence)>=80?'Strong':num(result.confidence)>=65?'Moderate':'Developing';
+    const confidenceTone=num(calculation?.confidence)>=80?'Strong':num(calculation?.confidence)>=65?'Moderate':'Developing';
     const flexibility=ratio>=1.12?'Excellent':ratio>=1?'Good':ratio>=.9?'Limited':'Needs attention';
-    const portfolio=num(result.ending)>0?'Strong':'Needs attention';
-    const income=status==='ontrack'?'On track':status==='close'?'Close':'Needs attention';
+    const portfolio=Number.isFinite(Number(metricMap.portfolioLongevity))?'Strong':'Unavailable';
+    const income=ratio>=1.12?'On track':ratio>=1?'On track':ratio>=.9?'Close':'Needs attention';
     const healthEl=el('dashboardHealth');
-    if(healthEl)healthEl.innerHTML=[
-      health('Retirement income',income,status==='attention'?'attention':status==='close'?'watch':'good'),
+    if(healthEl)healthEl.innerHTML=readiness?.isComplete?[
+      health('Retirement income',income,ratio>=1?'good':ratio>=.9?'watch':'attention'),
       health('Portfolio longevity',portfolio,portfolio==='Strong'?'good':'attention'),
       health('Planning flexibility',flexibility,ratio>=1?'good':ratio>=.9?'watch':'attention'),
-      health('Income timing',num(plan.cppStart1)>=65&&num(plan.oasStart1)>=65?'Planned':'Review','good')
-    ].join('');
+      health('Income timing',num(normalizedPlan.cppStart1)>=65&&num(normalizedPlan.oasStart1)>=65?'Planned':'Review','good')
+    ].join():health('Plan health','Complete your plan','attention');
 
-    let recommendations=[];
-    try{recommendations=window.HNRecommendationEngine?.rank(plan,result,3)||[];currentRecommendations=recommendations}catch(error){console.warn('Dashboard opportunities unavailable.',error)}
+    currentRecommendations=resolvedRecommendations;
     const opp=el('dashboardOpportunities');
+    const heading=el('dashboardOpportunitiesHeading');
+    const emptyState=readiness?.isComplete?window.HNRecommendationState?.getRecommendationEmptyState?.(status,resolvedRecommendations)||'':null;
+    const emptyHeading=readiness?.isComplete?window.HNRecommendationState?.getRecommendationHeading?.(status,resolvedRecommendations)||'Your plan needs attention':'Your plan needs attention';
+    if(heading){heading.textContent=readiness?.isComplete && !resolvedRecommendations.length ? emptyHeading : (readiness?.isComplete ? 'Your three opportunities' : 'Complete your plan to see opportunities');}
     if(opp){
-      opp.innerHTML=recommendations.length?recommendations.map((item,index)=>`<div class="overview-opportunity"><span class="overview-opportunity-number">${index+1}</span><div><strong>${escape(item.title)}</strong><small>${escape(item.summary||item.impactText||item.timing)}</small></div><button type="button" data-dashboard-opportunity="${escape(item.id)}">Explain this →</button></div>`).join(''):'<p class="quiet">No significant changes are recommended right now. Review the plan annually or after a meaningful life change.</p>';
+      opp.innerHTML=readiness?.isComplete?(resolvedRecommendations.length?resolvedRecommendations.map((item,index)=>`<div class="overview-opportunity"><span class="overview-opportunity-number">${index+1}</span><div><strong>${escape(item.title)}</strong><small>${escape(item.summary||item.impactText||item.timing)}</small></div><button type="button" data-dashboard-opportunity="${escape(item.id)}">Explain this →</button></div>`).join(''):(emptyState?`<p class="quiet">${escape(emptyState)}</p>`:'<p class="quiet">No significant changes are recommended right now.</p>')):`<p class="quiet">Add your income, savings, retirement age, and spending target to generate results and recommendations.</p>`;
     }
 
-    const updated=plan.updatedAt?new Date(plan.updatedAt):null;
+    const updated=normalizedPlan.updatedAt?new Date(normalizedPlan.updatedAt):null;
     const updatedLabel=updated&&!Number.isNaN(updated.getTime())?updated.toLocaleString('en-CA',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'Not recorded';
     const changes=el('dashboardChanges');
-    if(changes)changes.innerHTML=`
+    if(changes)changes.innerHTML=readiness?.isComplete?`
       <div class="overview-activity-item"><span class="overview-activity-icon">✓</span><div><strong>Plan calculations are current</strong><small>Last updated ${escape(updatedLabel)}</small></div></div>
-      <div class="overview-activity-item"><span class="overview-activity-icon">✓</span><div><strong>${recommendations.length||3} opportunities reviewed</strong><small>Ranked from the information in this plan</small></div></div>
-      <div class="overview-activity-item"><span class="overview-activity-icon">✓</span><div><strong>Cloud and browser saving available</strong><small>Your save status appears at the top of the page</small></div></div>`;
+      <div class="overview-activity-item"><span class="overview-activity-icon">✓</span><div><strong>${resolvedRecommendations.length?resolvedRecommendations.length:0} opportunities reviewed</strong><small>Ranked from the information in this plan</small></div></div>
+      <div class="overview-activity-item"><span class="overview-activity-icon">✓</span><div><strong>Cloud and browser saving available</strong><small>Your save status appears at the top of the page</small></div></div>`:`<div class="overview-activity-item"><span class="overview-activity-icon">!</span><div><strong>Complete your plan</strong><small>Add your income, savings, retirement age, and spending target to generate results and recommendations.</small></div></div>`;
 
     const reviewDate=el('dashboardReviewDate');
-    if(reviewDate){const d=new Date();d.setFullYear(d.getFullYear()+1);reviewDate.textContent=d.toLocaleDateString('en-CA',{month:'long',year:'numeric'});}
-    renderSavedScenarios(plan);
+    if(reviewDate){const d=new Date();d.setFullYear(d.getFullYear()+1);reviewDate.textContent=d.toLocaleDateString('en-CA',{month:'long',year:'numeric'});} 
+    renderSavedScenarios(normalizedPlan);
   }
 
   function rankExplanation(item,index){

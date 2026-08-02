@@ -43,21 +43,41 @@
     return Math.max(0,Math.min(100,100-Math.max(0,count-1)*20));
   }
 
-  function buildReasons({incomeScore,endingScore,confidenceScore,taxScore,flexibilityScore,incomeDelta,endingAssetsDelta,confidenceDelta,taxDelta}){
+  function buildReasons({incomeScore,endingScore,confidenceScore,taxScore,flexibilityScore,incomeDelta,endingAssetsDelta,confidenceDelta,taxDelta,guaranteedIncomeTimingScore,guaranteedIncomeTimingDelta,availableMetrics}){
     const improvements=[];
     const disadvantages=[];
-    if(incomeScore>0)improvements.push(`Monthly sustainable income improved by ${fmtCurrency(incomeDelta)}.`);
-    else if(incomeDelta<0)disadvantages.push(`Monthly sustainable income declined by ${fmtCurrency(Math.abs(incomeDelta))}.`);
-    if(endingScore>0)improvements.push(`Ending assets increased by ${fmtCurrency(endingAssetsDelta)}.`);
-    else if(endingAssetsDelta<0)disadvantages.push(`Ending assets declined by ${fmtCurrency(Math.abs(endingAssetsDelta))}.`);
-    if(confidenceScore>0)improvements.push(`Confidence improved by ${Math.round(confidenceDelta)} points.`);
-    else if(confidenceDelta<0)disadvantages.push(`Confidence declined by ${Math.round(Math.abs(confidenceDelta))} points.`);
-    if(taxScore>0)improvements.push(`Estimated taxes decreased by ${fmtCurrency(taxDelta)}.`);
-    else if(taxDelta<0)disadvantages.push(`Estimated taxes increased by ${fmtCurrency(Math.abs(taxDelta))}.`);
+    const unavailableMetrics=[];
+    const metrics=availableMetrics||{};
+    if(metrics.income!==false){
+      if(incomeScore>0)improvements.push(`Monthly sustainable income improved by ${fmtCurrency(incomeDelta)}.`);
+      else if(incomeDelta<0)disadvantages.push(`Monthly sustainable income declined by ${fmtCurrency(Math.abs(incomeDelta))}.`);
+      else if(metrics.income===undefined)unavailableMetrics.push('Monthly sustainable income');
+    }
+    if(metrics.ending!==false){
+      if(endingScore>0)improvements.push(`Ending assets increased by ${fmtCurrency(endingAssetsDelta)}.`);
+      else if(endingAssetsDelta<0)disadvantages.push(`Ending assets declined by ${fmtCurrency(Math.abs(endingAssetsDelta))}.`);
+      else if(metrics.ending===undefined)unavailableMetrics.push('Ending assets');
+    }
+    if(metrics.confidence!==false){
+      if(confidenceScore>0)improvements.push(`Confidence improved by ${Math.round(confidenceDelta)} points.`);
+      else if(confidenceDelta<0)disadvantages.push(`Confidence declined by ${Math.round(Math.abs(confidenceDelta))} points.`);
+      else if(metrics.confidence===undefined)unavailableMetrics.push('Planning confidence');
+    }
+    if(metrics.taxes!==false){
+      if(taxScore>0)improvements.push(`Estimated taxes decreased by ${fmtCurrency(taxDelta)}.`);
+      else if(taxDelta<0)disadvantages.push(`Estimated taxes increased by ${fmtCurrency(Math.abs(taxDelta))}.`);
+      else if(metrics.taxes===undefined)unavailableMetrics.push('Lifetime taxes');
+    }
+    if(metrics.guaranteedIncomeTiming!==false){
+      if(guaranteedIncomeTimingScore>0)improvements.push(`Guaranteed income timing improved by ${Math.round(guaranteedIncomeTimingDelta)} month${Math.abs(guaranteedIncomeTimingDelta)===1?'':'s'}.`);
+      else if(guaranteedIncomeTimingDelta<0)disadvantages.push(`Guaranteed income timing moved ${Math.round(Math.abs(guaranteedIncomeTimingDelta))} month${Math.abs(guaranteedIncomeTimingDelta)===1?'':'s'} later.`);
+      else if(metrics.guaranteedIncomeTiming===undefined)unavailableMetrics.push('Guaranteed-income timing');
+    }
     if(flexibilityScore>0)improvements.push('The scenario changed a single assumption and kept the adjustment simple.');
     const reasons=[...improvements,...disadvantages];
+    if(!reasons.length && unavailableMetrics.length)reasons.push('No measurable improvement or disadvantage was available for the current plan comparison.');
     if(!reasons.length)reasons.push('No measurable improvement was detected against the current plan.');
-    return {improvements,disadvantages,reasons};
+    return {improvements,disadvantages,unavailableMetrics,reasons};
   }
 
   function evaluateCandidateResult(item,plan,result,options={}){
@@ -67,6 +87,7 @@
     const endingAssets=num(item&&item.endingAssets);
     const confidence=num(item&&item.confidence);
     const taxes=num(item&&item.taxes);
+    const guaranteedIncomeTimingDelta=Math.abs(num(item&&item.guaranteedIncomeTimingDelta));
 
     const incomeDelta=monthlyIncome-baseline.baselineIncome;
     const endingAssetsDelta=endingAssets-baseline.baselineEnding;
@@ -79,9 +100,10 @@
     const confidenceScore=Math.max(0,Math.min(100,confidenceDelta));
     const taxScore=scoreValue(taxDelta,baseline.baselineTax);
     const flexibilityScore=Math.max(0,Math.min(100,flexibilityDelta));
+    const guaranteedIncomeTimingScore=Math.max(0,Math.min(100,Math.abs(guaranteedIncomeTimingDelta)*10));
 
-    const score=Math.round((incomeScore*weights.monthlyIncome + endingScore*weights.endingAssets + confidenceScore*weights.confidence + taxScore*weights.taxEfficiency + flexibilityScore*weights.flexibility)*100)/100;
-    const explanations=buildReasons({incomeScore,endingScore,confidenceScore,taxScore,flexibilityScore,incomeDelta,endingAssetsDelta,confidenceDelta,taxDelta});
+    const score=Math.round((incomeScore*weights.monthlyIncome + endingScore*weights.endingAssets + confidenceScore*weights.confidence + taxScore*weights.taxEfficiency + flexibilityScore*weights.flexibility + guaranteedIncomeTimingScore*0.05)*100)/100;
+    const explanations=buildReasons({incomeScore,endingScore,confidenceScore,taxScore,flexibilityScore,incomeDelta,endingAssetsDelta,confidenceDelta,taxDelta,guaranteedIncomeTimingScore,guaranteedIncomeTimingDelta,availableMetrics:item&&item.availableMetrics});
 
     return {
       score,
@@ -91,7 +113,9 @@
       taxDelta,
       reasons:explanations.reasons,
       improvements:explanations.improvements,
-      disadvantages:explanations.disadvantages
+      disadvantages:explanations.disadvantages,
+      unavailableMetrics:explanations.unavailableMetrics,
+      guaranteedIncomeTimingDelta
     };
   }
 

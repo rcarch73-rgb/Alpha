@@ -18,17 +18,19 @@
     return tests.candidate?tests.candidate(config):null;
   }
 
-  function buildCandidates(plan,result){
-    return tests.buildCandidates?tests.buildCandidates(plan,result):[];
+  function buildCandidates(plan,result,options={}){
+    return tests.buildCandidates?tests.buildCandidates(plan,result,options):[];
   }
 
-  function fallbackCandidates(plan,result){
-    return tests.fallbackCandidates?tests.fallbackCandidates(plan,result):[];
+  function fallbackCandidates(plan,result,options={}){
+    return tests.fallbackCandidates?tests.fallbackCandidates(plan,result,options):[];
   }
 
   function rank(plan,result,limit=3){
-    const scored=scorer.scoreCandidates?scorer.scoreCandidates(buildCandidates(plan||{},result||{}),plan||{},result||{}):[];
-    const fallback=scorer.scoreCandidates?scorer.scoreCandidates(fallbackCandidates(plan||{},result||{}),plan||{},result||{}):[];
+    const normalizedPlan=global.HNRecommendationState?.normalizePlan?.(plan||{})||plan||{};
+    const resolvedResult=result||{};
+    const scored=scorer.scoreCandidates?scorer.scoreCandidates(buildCandidates(normalizedPlan,resolvedResult,{calculateEngine:global.HNVerifiedEngine?.calculate}),normalizedPlan,resolvedResult):[];
+    const fallback=scorer.scoreCandidates?scorer.scoreCandidates(fallbackCandidates(normalizedPlan,resolvedResult,{calculateEngine:global.HNVerifiedEngine?.calculate}),normalizedPlan,resolvedResult):[];
     const ranked=ranking.rankCandidates?ranking.rankCandidates(scored.concat(fallback),Math.max(0,limit)):[].concat(scored,fallback).slice(0,Math.max(0,limit));
     return ranked;
   }
