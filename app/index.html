@@ -65,6 +65,7 @@
 </div><div class="toast" id="toast"></div><div class="alpha-note">Validation Release v0.4.4 · Milestone 3.1 · Golden tests + import fix · RC3-B2 engine unchanged</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/auth/supabase-client.js"></script>
+<script src="js/auth/auth-guard.js"></script>
 <script src="js/verified-engine.js"></script>
 <script src="js/engine-adapter.js"></script>
 <script src="js/scenario-evaluation.js"></script>
@@ -100,7 +101,7 @@ function writeRoute(screen,view){
 function readRoute(){
  const raw=location.hash.replace(/^#/,'');
  const [screen,view]=raw.split('/');
- return {screen:VALID_SCREENS.has(screen)?screen:'welcome',view:['evidence','recommendations','scenarios','review','settings','validation'].includes(view)?view:'evidence'};
+ return {screen:VALID_SCREENS.has(screen)?screen:'brief',view:['evidence','recommendations','scenarios','review','settings','validation'].includes(view)?view:'evidence'};
 }
 function go(id,options={}){
  if(!VALID_SCREENS.has(id))id='welcome';
