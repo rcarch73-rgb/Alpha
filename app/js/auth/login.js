@@ -42,7 +42,7 @@
     signInBtn.disabled = true;
     setStatus('Signing in...', '');
 
-    const { error } = await client.auth.signInWithPassword({
+    const { data, error } = await client.auth.signInWithPassword({
       email,
       password
     });
@@ -59,6 +59,13 @@
     }
 
     setStatus('Login successful.', 'success');
+    if (data && data.session) {
+      window.location.replace(
+        new URL('../../app/', window.location.href).href
+      );
+      return;
+    }
+
     form.reset();
   }
 
