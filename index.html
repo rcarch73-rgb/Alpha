@@ -1,2 +1,90 @@
 <!doctype html>
-<html lang="en-CA"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0; url=./app/index.html?v=0.4.3"><title>Harbour North</title><script>const q=window.location.search?window.location.search+'&v=0.4.3':'?v=0.4.3';window.location.replace('./app/index.html'+q+window.location.hash);</script></head><body><p><a href="./app/index.html?v=0.4.3">Open Harbour North</a></p></body></html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Harbour North</title>
+  <style>
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #f3f6fa;
+    }
+
+    body {
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app/js/auth/supabase-client.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      const maxChecks = 40;
+      const checkDelayMs = 25;
+
+      function goToLogin() {
+        window.location.replace('./auth/login.html');
+      }
+
+      function goToApp() {
+        window.location.replace(
+          './app/' + window.location.search + window.location.hash
+        );
+      }
+
+      function waitForClient() {
+        return new Promise((resolve) => {
+          let checks = 0;
+
+          function check() {
+            if (window.HNSupabaseClient) {
+              resolve(window.HNSupabaseClient);
+              return;
+            }
+
+            checks += 1;
+
+            if (checks >= maxChecks) {
+              resolve(null);
+              return;
+            }
+
+            setTimeout(check, checkDelayMs);
+          }
+
+          check();
+        });
+      }
+
+      async function route() {
+        try {
+          const shared = await waitForClient();
+          const client = shared && shared.client;
+
+          if (!client?.auth?.getSession) {
+            goToLogin();
+            return;
+          }
+
+          const { data } = await client.auth.getSession();
+
+          if (data?.session) {
+            goToApp();
+            return;
+          }
+
+          goToLogin();
+        } catch (_error) {
+          goToLogin();
+        }
+      }
+
+      route();
+    })();
+  </script>
+</body>
+</html>

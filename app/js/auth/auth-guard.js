@@ -19,7 +19,7 @@
           return;
         }
 
-        checks += 1;
+        checks++;
         if (checks >= maxChecks) {
           resolve(null);
           return;
@@ -43,9 +43,14 @@
       }
 
       const { data } = await client.auth.getSession();
+
       if (!data || !data.session) {
         redirectToLogin();
+        return;
       }
+
+      document.documentElement.classList.remove('hn-preauth-pending');
+
     } catch (_error) {
       redirectToLogin();
     }
