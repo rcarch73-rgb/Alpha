@@ -102,9 +102,10 @@
     const ahead=items[index-1];
     const behind=items[index+1];
     const position=index+1;
+    const category=String(item?.category||'planning opportunity').toLowerCase();
     let lead='';
-    if(position===1) lead=`This opportunity ranks first because it addresses the most immediate or highest-impact issue identified in the current plan: ${item.category.toLowerCase()}.`;
-    else lead=`This opportunity ranks ${position===2?'second':'third'} because ${ahead?`“${ahead.title}” currently has a more immediate or larger projected effect. `:''}It still ranks ahead of lower-priority maintenance actions because it can materially improve ${item.category.toLowerCase()}.`;
+    if(position===1) lead=`This opportunity ranks first because it addresses the most immediate or highest-impact issue identified in the current plan: ${category}.`;
+    else lead=`This opportunity ranks ${position===2?'second':'third'} because ${ahead?`“${ahead.title}” currently has a more immediate or larger projected effect. `:''}It still ranks ahead of lower-priority maintenance actions because it can materially improve ${category}.`;
     const comparison=behind?` It ranks ahead of “${behind.title}” because the current plan data gives this issue greater urgency or potential benefit.`:'';
     return lead+comparison;
   }

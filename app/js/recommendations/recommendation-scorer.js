@@ -20,7 +20,11 @@
   }
 
   function isCandidateResult(item){
-    return !!item&&typeof item==='object'&&(Object.prototype.hasOwnProperty.call(item,'monthlyIncome')||Object.prototype.hasOwnProperty.call(item,'endingAssets')||Object.prototype.hasOwnProperty.call(item,'confidence')||Object.prototype.hasOwnProperty.call(item,'taxes'));
+    if(!item||typeof item!=='object')return false;
+    return ['monthlyIncome','endingAssets','confidence','taxes'].some(key=>{
+      const value=item[key];
+      return value!==null&&value!==''&&Number.isFinite(Number(value));
+    });
   }
 
   function getBaselineMetrics(plan,result){
