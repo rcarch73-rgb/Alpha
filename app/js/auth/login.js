@@ -61,7 +61,7 @@
     setStatus('Login successful.', 'success');
     if (data && data.session) {
       window.location.replace(
-        new URL('../../app/', window.location.href).href
+        new URL('../app/', window.location.href).href
       );
       return;
     }
