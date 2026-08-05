@@ -93,7 +93,7 @@ function syncIncomeNames(){
 }
 function bind(){Object.entries(plan).forEach(([k,v])=>{const el=$(k);if(el&&!Array.isArray(v))el.value=v});document.querySelectorAll('[data-household]').forEach(x=>x.classList.toggle('selected',x.dataset.household===plan.household));renderOtherIncome();togglePartner();updateSummary();$('resumeBtn').classList.toggle('hidden',!localStorage.getItem(KEY))}
 function save(show=false){collect();localStorage.setItem(KEY,JSON.stringify(plan));$('saveStatus').textContent='Saved locally';if(show)toast('Plan saved') ;window.dispatchEvent(new CustomEvent('hn:plan-saved',{detail:{plan}}))}
-window.HNCloudBridge={getPlan:()=>structuredClone(plan),hasLocalPlan:()=>!!localStorage.getItem(KEY),applyPlan:p=>{plan={...defaults,...p};save();bind();calculateAndRender();return true},createFreshPlan:()=>createFreshPlan(),getUpdatedAt:()=>plan.updatedAt};
+window.HNCloudBridge={getPlan:()=>structuredClone(plan),hasLocalPlan:()=>!!localStorage.getItem(KEY),applyPlan:p=>{plan={...defaults,...p};localStorage.setItem(KEY,JSON.stringify(plan));bind();calculateAndRender();return true},createFreshPlan:()=>createFreshPlan(),getUpdatedAt:()=>plan.updatedAt};
 function writeRoute(screen,view){
  const route=screen==='explore'&&view?`#explore/${view}`:`#${screen}`;
  if(location.hash!==route)history.replaceState(null,'',route);
@@ -294,6 +294,7 @@ $('newPlanBtn').addEventListener('click',()=>{
  if(hasSaved&&!confirm('Start a new plan? This will permanently erase the plan saved in this browser.'))return;
  localStorage.removeItem(KEY);
  localStorage.removeItem(REVIEW_KEY);
+ window.HNAuth?.setActivePlanId?.(null);
  plan=createFreshPlan();
  result=null;
  bind();
@@ -329,6 +330,7 @@ $('importBtn').addEventListener('click',async()=>{
   const text=await readPlanFile(f);
   const raw=JSON.parse(text.replace(/^\uFEFF/,''));
   const importedPlan=normalizeImportedPlan(raw);
+  window.HNAuth?.setActivePlanId?.(null);
   importedPlan.schemaVersion='foundation-0.4.4';
   importedPlan.updatedAt=new Date().toISOString();
   plan=importedPlan;
@@ -363,7 +365,7 @@ $('runValidationBtn').addEventListener('click',()=>runValidation(true));
 $('exportValidationBtn').addEventListener('click',exportValidationReport);
 $('yearInspectorSelect').addEventListener('change',e=>renderYearInspector(Number(e.target.value)));
 document.addEventListener('click',e=>{const row=e.target.closest('[data-year-index]');if(row)renderYearInspector(Number(row.dataset.yearIndex))});
-$('resetBtn').addEventListener('click',()=>{if(confirm('Delete this local alpha plan?')){localStorage.removeItem(KEY);localStorage.removeItem(REVIEW_KEY);plan=createFreshPlan();result=null;bind();go('welcome');toast('Local plan deleted')}});
+$('resetBtn').addEventListener('click',()=>{if(confirm('Delete this local alpha plan?')){localStorage.removeItem(KEY);localStorage.removeItem(REVIEW_KEY);window.HNAuth?.setActivePlanId?.(null);plan=createFreshPlan();result=null;bind();go('welcome');toast('Local plan deleted')}});
 window.addEventListener('hashchange',()=>{const route=readRoute();go(route.screen,{view:route.view,skipRoute:true})});
 bind();
 syncDeveloperMode();
