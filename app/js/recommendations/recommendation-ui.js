@@ -5,6 +5,7 @@
   const num=value=>Number.isFinite(Number(value))?Number(value):0;
   const money=value=>new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:0}).format(num(value));
   const badgeClass=value=>value==='High impact'?'high':value==='Moderate impact'?'moderate':'planning';
+  let currentRecommendations=[];
 
   function getRecommendations(plan,result){
     if(!window.HNRecommendationEngine)return [];
@@ -86,6 +87,20 @@
     return String(item?.impactText||item?.impact||'This opportunity may improve the plan, but the exact effect has not yet been modelled.');
   }
 
+  function hasComparison(item){
+    return !!(item?.comparison?.patch&&typeof item.comparison.patch==='object');
+  }
+
+  function comparisonButtonLabel(item){
+    return hasComparison(item)?'Compare this adjustment':'Comparison not available yet';
+  }
+
+  function comparisonExplanation(item){
+    return hasComparison(item)
+      ?'Open the existing Scenario Coach to compare this adjustment temporarily. Your saved plan remains unchanged.'
+      :'This recommendation identifies a planning priority, but it does not yet contain a specific modelled adjustment.';
+  }
+
   function rankReason(item,index){
     if(index===0){
       if(item.id==='plan-gap')return 'Most important plan adjustment';
@@ -134,20 +149,16 @@
   }
 
   function comparisonMarkup(item){
-    if(item.comparison){
-      const c=item.comparison;
-      return `<div class="next-step-comparison hidden" data-next-step-comparison>
-        <div class="comparison-title">See the difference: ${escapeHtml(c.label)}</div>
-        <div class="comparison-grid">
-          <div><span>Current sustainable spending</span><strong>${money(c.current.sustainable)}/mo</strong></div>
-          <div class="alternative"><span>Compared result</span><strong>${money(c.alternative.sustainable)}/mo</strong></div>
-          <div><span>Current ending assets</span><strong>${money(c.current.ending)}</strong></div>
-          <div class="alternative"><span>Compared ending assets</span><strong>${money(c.alternative.ending)}</strong></div>
-        </div>
-        <p>${escapeHtml(c.summary)} This comparison is temporary and does not change the saved plan.</p>
+    if(hasComparison(item)){
+      return `<div class="next-step-comparison" data-next-step-comparison>
+        <button class="btn secondary next-step-compare-btn" type="button" data-recommendation-comparison>${escapeHtml(comparisonButtonLabel(item))}</button>
+        <p class="quiet">${escapeHtml(comparisonExplanation(item))}</p>
       </div>`;
     }
-    return `<div class="next-step-comparison hidden review-note" data-next-step-comparison><div class="comparison-title">What is needed to compare this reliably</div><p>${escapeHtml(item.comparisonNote||'A reliable dollar comparison is not available for this opportunity yet.')}</p></div>`;
+    return `<div class="next-step-comparison review-note" data-next-step-comparison>
+      <div class="comparison-title">Comparison not available yet</div>
+      <p>${escapeHtml(comparisonExplanation(item))}</p>
+    </div>`;
   }
 
   function card(item,index,items){
@@ -166,7 +177,6 @@
             ${rankingMarkup(item,index,items)}
             <div class="next-step-impact"><span>Expected impact</span><strong>${escapeHtml(impactLabel(item))}</strong></div>
             ${evidenceList(item.evidence||[])}
-            <button class="btn secondary next-step-compare-btn" type="button" data-see-difference>${item.comparison?'See the difference':'What would it take to compare?'}</button>
             ${comparisonMarkup(item)}
             <div class="next-step-plan-change"><h4>How to make this change</h4><p>${escapeHtml(item.how)}</p>${actionMarkup(item)}</div>
           </div>
@@ -186,6 +196,7 @@
     if(!list)return;
     list.className='next-steps-list';
     const items=getRecommendations(plan,result);
+    currentRecommendations=items;
     renderSummary(items,plan,result);
     if(!items.length){
       list.innerHTML='<section class="card next-step-empty"><h3>Your plan looks well positioned.</h3><p class="quiet">There are no significant planning changes to prioritize right now. Review the plan annually or after a meaningful change.</p></section>';
@@ -206,14 +217,12 @@
       setTimeout(()=>{const target=focus&&document.getElementById(focus);if(target){target.focus({preventScroll:true});target.scrollIntoView({behavior:'smooth',block:'center'});target.closest('.field')?.classList.add('plan-field-highlight');setTimeout(()=>target.closest('.field')?.classList.remove('plan-field-highlight'),2200)}},120);
       return;
     }
-    const compareButton=event.target.closest('[data-see-difference]');
-    if(compareButton){
-      const card=compareButton.closest('[data-next-step-card]');
-      const panel=card&&card.querySelector('[data-next-step-comparison]');
-      if(panel){
-        const hidden=panel.classList.toggle('hidden');
-        compareButton.textContent=hidden?(panel.classList.contains('review-note')?'What would it take to compare?':'See the difference'):'Hide comparison';
-      }
+    const recommendationComparison=event.target.closest('[data-recommendation-comparison]');
+    if(recommendationComparison){
+      const card=recommendationComparison.closest('[data-next-step-card]');
+      const itemId=card?.dataset.nextStepCard;
+      const item=currentRecommendations.find(entry=>entry.id===itemId);
+      if(item&&hasComparison(item))window.HNDashboard?.openScenarioCoach?.(item);
       return;
     }
     const toggle=event.target.closest('[data-next-step-toggle]');
