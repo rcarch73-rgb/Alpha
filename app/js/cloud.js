@@ -4,12 +4,11 @@ if (!isSupabaseConfigured || !supabase) {
   console.info('Harbour North cloud save is disabled in local alpha mode.');
 } else {
 
-const TABLE = 'retirement_plans';
-const PLAN_NAME = 'My Retirement Plan';
+const TABLE = 'plans';
+const ACTIVE_PLAN_KEY = 'harbourNorth.activePlanId';
 const DEBOUNCE_MS = 1800;
 
 let user = null;
-let rowId = null;
 let timer = null;
 let saving = false;
 let pending = false;
@@ -28,6 +27,19 @@ function bridge() {
   return window.HNCloudBridge;
 }
 
+function activePlanId() {
+  try {
+    return localStorage.getItem(ACTIVE_PLAN_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+function planNameOf(plan) {
+  const named = String(plan?.planName || '').trim();
+  return named || 'Retirement plan';
+}
+
 function timeOf(plan) {
   const value = plan?.meta?.updatedAt;
   const parsed = value ? Date.parse(value) : NaN;
@@ -35,20 +47,20 @@ function timeOf(plan) {
 }
 
 async function findCloudPlan() {
+  const id = activePlanId();
+  if (!id || !user) return null;
   const { data, error } = await supabase
     .from(TABLE)
     .select('id, plan_name, plan_data, created_at, updated_at')
+    .eq('id', id)
     .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
-    .limit(1)
     .maybeSingle();
 
   if (error) throw error;
-  if (data?.id) rowId = data.id;
   return data || null;
 }
 
-async function writeCloudPlan() {
+async function writeCloudPlan(capturedPlan, capturedId) {
   if (!user || !bridge() || applyingRemote) return;
   if (saving) {
     pending = true;
@@ -60,25 +72,35 @@ async function writeCloudPlan() {
   setStatus('Cloud: saving…', 'syncing');
 
   try {
-    const plan = bridge().getPlan();
+    const id = capturedId ?? activePlanId();
+    if (!id) {
+      setStatus('Cloud: saved locally', 'saved');
+      return;
+    }
+
+    const plan = capturedPlan ?? bridge().getPlan();
     const values = {
-      user_id: user.id,
-      plan_name: PLAN_NAME,
+      plan_name: planNameOf(plan),
       plan_data: plan,
       updated_at: new Date().toISOString()
     };
 
-    if (rowId) {
-      const { error } = await supabase.from(TABLE).update(values).eq('id', rowId).eq('user_id', user.id);
-      if (error) throw error;
-    } else {
-      const { data, error } = await supabase.from(TABLE).insert(values).select('id').single();
-      if (error) throw error;
-      rowId = data.id;
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update(values)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select('id')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data?.id) {
+      setStatus('Cloud: saved locally', 'saved');
+      return;
     }
 
     setStatus('Cloud: saved', 'saved');
     window.dispatchEvent(new CustomEvent('hn:cloud-saved'));
+    window.dispatchEvent(new CustomEvent('hn:cloud-plan-saved', { detail: { id } }));
   } catch (error) {
     console.error('Harbour North cloud save failed:', error);
     setStatus('Cloud: save failed', 'error');
@@ -90,21 +112,29 @@ async function writeCloudPlan() {
 
 function scheduleSave(delay = DEBOUNCE_MS) {
   if (!user || applyingRemote) return;
+  const id = activePlanId();
+  const plan = bridge()?.getPlan?.();
+  const snapshot = plan ? structuredClone(plan) : null;
   clearTimeout(timer);
   setStatus('Cloud: changes pending', 'syncing');
-  timer = setTimeout(writeCloudPlan, delay);
+  timer = setTimeout(() => writeCloudPlan(snapshot, id), delay);
 }
 
 async function reconcile() {
   const b = bridge();
   if (!b) throw new Error('Planner storage bridge is unavailable.');
 
+  if (!activePlanId()) {
+    setStatus('Cloud: saved locally', 'saved');
+    return;
+  }
+
   setStatus('Cloud: checking…', 'syncing');
   const cloudRow = await findCloudPlan();
   const localPlan = b.getPlan();
 
   if (!cloudRow?.plan_data) {
-    await writeCloudPlan();
+    setStatus('Cloud: saved locally', 'saved');
     return;
   }
 

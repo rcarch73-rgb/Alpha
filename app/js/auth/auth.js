@@ -19,9 +19,8 @@
     el('cloudSyncBtn')?.classList.toggle('hidden',!user);el('signOutBtn')?.classList.toggle('hidden',!user);
     if(el('saveStatus'))el('saveStatus').textContent=user?'Cloud connected':'Saved locally';
   }
-  async function saveCloudPlan(showToast=false){
+  async function saveCloudPlanWithPayload(plan,id,showToast=false){
     if(!session?.user||suppressSync)return false;
-    const plan=window.HNCloudBridge?.getPlan?.(), id=activePlanId();
     if(!plan||!id)return false;
     const payload={plan_name:plan.planName||`${plan.name1||'My'} retirement plan`,plan_data:plan,updated_at:new Date().toISOString()};
     const {error}=await client.from('plans').update(payload).eq('id',id).eq('user_id',session.user.id);
@@ -31,7 +30,17 @@
     window.dispatchEvent(new CustomEvent('hn:cloud-plan-saved',{detail:{id}}));
     return true;
   }
-  function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>saveCloudPlan(false).catch(e=>{console.error('Cloud sync failed',e);if(el('saveStatus'))el('saveStatus').textContent='Saved locally · sync pending'}),700)}
+  async function saveCloudPlan(showToast=false){
+    const plan=window.HNCloudBridge?.getPlan?.(), id=activePlanId();
+    return saveCloudPlanWithPayload(plan,id,showToast);
+  }
+  function scheduleSync(){
+    const id=activePlanId();
+    const plan=window.HNCloudBridge?.getPlan?.();
+    const snapshot=plan?structuredClone(plan):null;
+    clearTimeout(syncTimer);
+    syncTimer=setTimeout(()=>saveCloudPlanWithPayload(snapshot,id,false).catch(e=>{console.error('Cloud sync failed',e);if(el('saveStatus'))el('saveStatus').textContent='Saved locally · sync pending'}),700)
+  }
   async function ensureInitialPlan(){
     if(!session?.user)return;
     const {count,error}=await client.from('plans').select('id',{count:'exact',head:true}).eq('user_id',session.user.id);
