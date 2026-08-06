@@ -7,7 +7,44 @@
   const signInBtn = document.getElementById('signInBtn');
   const statusEl = document.getElementById('status');
 
-  const client = window.HNSupabaseClient && window.HNSupabaseClient.client;
+  const maxChecks = 40;
+  const checkDelayMs = 25;
+
+  let client = null;
+
+  function setPending(pending) {
+    document.documentElement.classList.toggle('hn-auth-pending', pending);
+  }
+
+  function appHref() {
+    const url = new URL('../app/', window.location.href);
+    url.search = window.location.search;
+    url.hash = window.location.hash;
+    return url.href;
+  }
+
+  function waitForSharedClient() {
+    return new Promise((resolve) => {
+      let checks = 0;
+
+      function check() {
+        if (window.HNSupabaseClient && window.HNSupabaseClient.client) {
+          resolve(window.HNSupabaseClient.client);
+          return;
+        }
+
+        checks += 1;
+        if (checks >= maxChecks) {
+          resolve(null);
+          return;
+        }
+
+        setTimeout(check, checkDelayMs);
+      }
+
+      check();
+    });
+  }
 
   function setStatus(message, type) {
     statusEl.textContent = message;
@@ -60,14 +97,36 @@
 
     setStatus('Login successful.', 'success');
     if (data && data.session) {
-      window.location.replace(
-        new URL('../app/', window.location.href).href
-      );
+      window.location.replace(appHref());
       return;
     }
 
     form.reset();
   }
 
-  form.addEventListener('submit', onSubmit);
+  async function initialize() {
+    setPending(true);
+
+    try {
+      client = await waitForSharedClient();
+
+      if (client && client.auth && typeof client.auth.getSession === 'function') {
+        const { data } = await client.auth.getSession();
+        if (data && data.session) {
+          window.location.replace(appHref());
+          return;
+        }
+      }
+    } catch (_error) {
+      // Intentionally reveal sign-in UI on check failure.
+    }
+
+    setPending(false);
+  }
+
+  if (form) {
+    form.addEventListener('submit', onSubmit);
+  }
+
+  initialize();
 })();

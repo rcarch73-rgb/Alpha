@@ -27,13 +27,17 @@
       const checkDelayMs = 25;
 
       function goToLogin() {
-        window.location.replace('./auth/login.html');
+        const url = new URL('./auth/login.html', window.location.href);
+        url.search = window.location.search;
+        url.hash = window.location.hash;
+        window.location.replace(url.href);
       }
 
       function goToApp() {
-        window.location.replace(
-          './app/' + window.location.search + window.location.hash
-        );
+        const url = new URL('./app/', window.location.href);
+        url.search = window.location.search;
+        url.hash = window.location.hash;
+        window.location.replace(url.href);
       }
 
       function waitForClient() {
