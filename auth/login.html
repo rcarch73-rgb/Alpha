@@ -4,89 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Harbour North - Sign In</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f6f8f9;
-      color: #173548;
-      display: grid;
-      place-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-    .card {
-      width: min(420px, 100%);
-      background: #fff;
-      border: 1px solid #d8e2e8;
-      border-radius: 14px;
-      padding: 22px;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
-    }
-    h1 {
-      margin: 0 0 16px;
-      font-size: 28px;
-      color: #103a56;
-    }
-    label {
-      display: block;
-      margin: 12px 0 6px;
-      font-weight: 700;
-      font-size: 14px;
-    }
-    input {
-      width: 100%;
-      min-height: 44px;
-      border: 1px solid #c8d4dc;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font: inherit;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 14px;
-      width: 100%;
-      min-height: 46px;
-      border: 0;
-      border-radius: 10px;
-      background: #103a56;
-      color: #fff;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-    #status {
-      margin-top: 14px;
-      min-height: 22px;
-      font-size: 14px;
-      line-height: 1.45;
-      color: #4a5d6b;
-    }
-    #status.error {
-      color: #9a2f2f;
-    }
-    #status.success {
-      color: #216545;
-    }
-  </style>
+  <link rel="stylesheet" href="../app/css/auth.css">
 </head>
-<body>
-  <main class="card">
-    <h1>Harbour North</h1>
-    <form id="loginForm" novalidate>
-      <label for="email">Email</label>
-      <input id="email" name="email" type="email" autocomplete="email" required>
+<body class="hn-login-page">
+  <main class="hn-login-shell" aria-labelledby="hnLoginTitle">
+    <section class="hn-login-card">
+      <div class="hn-login-brand" aria-hidden="true">Harbour North</div>
+      <h1 id="hnLoginTitle">Plan your retirement with confidence.</h1>
+      <p class="hn-login-copy">Sign in to continue your Harbour North plan.</p>
 
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <form id="loginForm" novalidate>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
 
-      <button id="signInBtn" type="submit">Sign In</button>
-      <div id="status" aria-live="polite"></div>
-    </form>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+        <button id="signInBtn" type="submit">Sign In</button>
+        <div id="status" aria-live="polite"></div>
+      </form>
+
+      <div class="hn-login-links">
+        <a href="../app/#createAccount">Create an account</a>
+        <a href="../app/#signIn">Need help signing in?</a>
+      </div>
+    </section>
+    <div class="hn-login-art" aria-hidden="true"><span class="hn-beacon"></span></div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

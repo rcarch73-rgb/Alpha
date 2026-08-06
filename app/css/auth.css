@@ -1,2 +1,29 @@
 
 .auth-panel{max-width:680px}.auth-message{min-height:24px;margin-top:16px;color:var(--muted);font-weight:750}.auth-message.error{color:var(--red)}.auth-message.success{color:var(--forest)}.auth-links{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:16px}.account-button{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:999px;padding:7px 12px;font-weight:800}.auth-card-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}@media(max-width:620px){.auth-links{align-items:flex-start;flex-direction:column}.account-button{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+
+body.hn-login-page{margin:0;min-height:100vh;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at 85% 10%,rgba(160,184,194,.28),transparent 42%),linear-gradient(165deg,#f8f5ee 0%,#f2f6f4 62%,#edf3f5 100%);color:#173548;display:grid;place-items:center;padding:24px;box-sizing:border-box}
+.hn-login-shell{width:min(1040px,100%);display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:28px;align-items:stretch}
+.hn-login-card{position:relative;background:rgba(255,252,246,.97);border:1px solid rgba(16,58,86,.14);border-radius:22px;padding:30px 28px;box-shadow:0 20px 44px rgba(16,58,86,.12)}
+.hn-login-brand{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:#2f6f76;margin-bottom:14px}
+.hn-login-card h1{margin:0;font-size:33px;line-height:1.1;color:#103a56;letter-spacing:-.02em}
+.hn-login-copy{margin:12px 0 0;color:#4d6371;line-height:1.5;font-weight:520}
+body.hn-login-page form{margin-top:22px}
+body.hn-login-page label{display:block;margin:14px 0 6px;font-size:14px;font-weight:700;color:#1a4157}
+body.hn-login-page input{width:100%;min-height:46px;border:1px solid rgba(16,58,86,.24);border-radius:11px;padding:10px 12px;box-sizing:border-box;font:inherit;background:#fff;color:#173548}
+body.hn-login-page input:focus{outline:2px solid rgba(47,111,118,.26);outline-offset:1px;border-color:#2f6f76}
+body.hn-login-page button#signInBtn{margin-top:16px;width:100%;min-height:48px;border:0;border-radius:11px;background:#103a56;color:#fff;font:inherit;font-weight:750;cursor:pointer}
+body.hn-login-page button#signInBtn:disabled{opacity:.62;cursor:wait}
+body.hn-login-page #status{margin-top:14px;min-height:22px;font-size:14px;line-height:1.45;color:#415a6a}
+body.hn-login-page #status.error{color:#8f2d2d}
+body.hn-login-page #status.success{color:#1f6846}
+.hn-login-links{margin-top:16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hn-login-links a{color:#1a6070;font-weight:700;text-decoration:none}
+.hn-login-links a:hover{text-decoration:underline}
+.hn-login-art{position:relative;border-radius:22px;border:1px solid rgba(16,58,86,.12);background:linear-gradient(160deg,rgba(16,58,86,.88) 0%,rgba(21,82,96,.86) 52%,rgba(43,118,122,.82) 100%);overflow:hidden;box-shadow:0 20px 44px rgba(16,58,86,.14)}
+.hn-login-art::before{content:"";position:absolute;inset:auto 8% 0 8%;height:42%;background:linear-gradient(to top,rgba(245,246,241,.24),rgba(245,246,241,0));border-radius:65% 65% 0 0/100% 100% 0 0}
+.hn-login-art::after{content:"";position:absolute;top:16%;left:56%;width:152px;height:152px;border-radius:50%;background:radial-gradient(circle,rgba(214,182,111,.72) 0%,rgba(214,182,111,0) 68%)}
+.hn-login-art .hn-beacon{position:absolute;bottom:22%;left:20%;width:18px;height:72px;background:linear-gradient(to top,#f3edd8,#fff6dc);border-radius:6px}
+.hn-login-art .hn-beacon::before{content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:30px;height:34px;border-radius:10px 10px 4px 4px;background:#f3edd8}
+.hn-login-art .hn-beacon::after{content:"";position:absolute;bottom:112%;left:50%;transform:translateX(-50%);width:170px;height:74px;background:radial-gradient(ellipse at left,rgba(255,243,198,.45),rgba(255,243,198,0) 72%)}
+@media(max-width:920px){.hn-login-shell{grid-template-columns:1fr}.hn-login-art{min-height:170px}}
+@media(max-width:620px){body.hn-login-page{padding:16px}.hn-login-card{padding:24px 20px}.hn-login-card h1{font-size:27px}.hn-login-links{flex-direction:column;align-items:flex-start}}
